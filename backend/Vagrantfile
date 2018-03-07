@@ -1,0 +1,93 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'yaml'
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+# "Missing" keys get assigned an empty hash to arbitrary depth
+class ConfigHash < Hash
+  def initialize
+    super {|h, k| h[k] = self.class.new}
+  end
+
+  def nil?
+    empty?
+  end
+end
+
+PROJECT_MAPPINGS = ConfigHash.new
+begin
+  require '~/.vagrant-resources.rb'
+rescue LoadError
+end
+HOST_SETTINGS = PROJECT_MAPPINGS[:cs511_segmentation]
+
+PORT_MAPPING_FILE = Pathname('~/.vagrant-ssh-ports.yaml').expand_path
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  # All Vagrant configuration is done here. The most common configuration
+  # options are documented and commented below. For a complete reference,
+  # please see the online documentation at vagrantup.com.
+
+  # Every Vagrant virtual environment requires a box to build off of.
+  config.vm.box = "velocity42/xenial64"
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # config.vm.network :forwarded_port, guest: 80, host: 8080
+
+  # Change the host port for SSH access to the VM (allows running multiple VMs on one host machine simultaneously)
+  if (ssh_port = HOST_SETTINGS[:ssh_port]).nil?
+    ssh_port_mappings = begin
+      YAML.load_file(PORT_MAPPING_FILE)
+    rescue Errno::ENOENT
+      {}
+    end
+    unless ssh_port = ssh_port_mappings['cs511_segmentation']
+      ssh_port = ssh_port_mappings['cs511_segmentation'] = (ssh_port_mappings.values + [2222]).max + 1
+      PORT_MAPPING_FILE.open('w') do |f|
+        f.puts "# THIS FILE IS AUTOMATICALLY REWRITTEN FOR PROJECTS WITH UNSPECIFIED SSH PORT"
+        YAML.dump(ssh_port_mappings, f)
+      end
+    end
+  end
+  config.vm.network :forwarded_port, guest: 22, host: 2222, id: "ssh", disabled: true
+  config.vm.network :forwarded_port, guest: 22, host: ssh_port, auto_correct: true
+
+  # Forward the Flask default server port
+  config.vm.network :forwarded_port, guest: 5000, host: 5000, host_ip: '127.0.0.1'
+
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network :private_network, ip: "192.168.33.10"
+  unless (private_network_ip = HOST_SETTINGS[:private_network_ip]).nil?
+    config.vm.network :private_network, ip: private_network_ip
+  end
+
+  # If true, then any SSH connections made will enable agent forwarding.
+  # Default value: false
+  # config.ssh.forward_agent = true
+
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  config.vm.provider :virtualbox do |vb|
+    vb.name = 'segservice'
+  #   # Don't boot with headless mode
+  #   vb.gui = true
+  #
+  #   # Use VBoxManage to customize the VM. For example to change memory:
+  #   vb.customize ["modifyvm", :id, "--memory", "1024"]
+    vb.memory = 1024
+  end
+  #
+  # View the documentation for the provider you're using for more
+  # information on available options.
+
+  config.vm.provision :shell, path: "vagrant-bootstrap.sh"
+
+end
