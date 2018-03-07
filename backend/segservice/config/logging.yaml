@@ -1,0 +1,27 @@
+version: 1
+
+disable_existing_loggers: false
+
+formatters:
+    logfile:
+        format: "%(asctime)s.%(msecs)0.3d (%(thread)5d) %(name)-15s %(levelname)-8s %(message)s"
+        datefmt: "%Y-%m-%d %H:%M:%S"
+
+filters: {}
+
+handlers:
+    logfile:
+        level: ERROR
+        formatter: logfile
+        class: logging.handlers.RotatingFileHandler
+        filename: !configval LOGFILE
+        maxBytes: 100000
+        backupCount: 4
+
+root:
+    level: ERROR
+    handlers: [logfile]
+
+loggers:
+    segservice:
+        level: WARNING
