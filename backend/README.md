@@ -1,8 +1,8 @@
 # Segmentation Backend Service (segservice)
 
 This codebase provides functionality to our Chrome extension in two layers:
-* The currently supported transport for communicating with this service is HTTP(S)
-* Functionality is provided via exchange of JSON documents (POSTed request and response) to predetermined URL paths
+* The currently supported transport for communicating with this service is HTTP(S) using the POST method, with entry point bindings corresponding to the path component of the URL
+* Functionality is provided via exchange of JSON documents (request and response) on bound application entry point names (established with `segservice.app.method`)
 
 ## Getting Started
 

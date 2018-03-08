@@ -1,7 +1,7 @@
 import operator
 from segservice import app
 
-### THIS IS AN EXAMPLE ###
+### BEGIN EXAMPLE ###
 # Uncomment the decorator line "@app.method(..." on the definition of
 # ``calculate`` below to activate this calculator.
 
@@ -21,14 +21,16 @@ class Calculator:
     def from_request_data(cls, jd):
         instance = cls()
         instance.stack = jd['stack']
-        instance.operation = jd['operation']
+        instance.operation = jd.get('operation')
         return instance
     
     def to_response_data(self, ):
-        return dict(
+        result = dict(
             stack=self.stack,
-            operation=self.operation,
         )
+        if self.operation is not None:
+            result['operation'] = self.operation
+        return result
     
     def execute(self, ):
         stack, op = self.stack, self.operation
@@ -47,3 +49,5 @@ class Calculator:
 def calculate(c: Calculator):
     c.execute()
     return c
+
+### END EXAMPLE ###
