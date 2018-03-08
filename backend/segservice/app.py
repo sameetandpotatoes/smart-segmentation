@@ -105,7 +105,9 @@ class Application(Flask):
         supercede the values provided by later sources (i.e. have higher
         priority):
         
-        * Arguments bound in the URL path (i.e. *path_to_bind*)
+        * Arguments bound in the URL path (i.e. *path_to_bind*), using the
+          same syntax as Flask's ``route`` for variable segments
+          (http://flask.pocoo.org/docs/0.12/quickstart/#variable-rules)
         * Arguments in the JSON request body
         * Arguments in the query string (but not those listed in *non_qs_params*)
         
