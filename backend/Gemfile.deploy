@@ -1,0 +1,4 @@
+# Dedicated gem file for gems required for deployment only (i.e. to use capistrano)
+source 'https://rubygems.org'
+gem 'capistrano'
+gem 'capistrano-ext'

@@ -1,2 +1,4 @@
 /.vagrant
 /segservice/config/local_config.py
+/Gemfile.deploy.lock
+/log/capistrano.log
