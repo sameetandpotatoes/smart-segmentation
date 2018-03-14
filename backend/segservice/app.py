@@ -1,9 +1,11 @@
+import datetime
 from flask import Flask, request
 import functools
 import inspect
 import json
 import logging.config
 import os
+import pytz
 from werkzeug.datastructures import MultiDict
 import sys
 import yaml
@@ -177,6 +179,15 @@ class Application(Flask):
         binder.partial = partial_binder
         
         return binder
+    
+    @property
+    def timezone(self):
+        if not hasattr(self, '_timezone'):
+            self._timezone = pytz.timezone(self.config['TIMEZONE'])
+        return self._timezone
+    
+    def now(self, ):
+        return datetime.datetime.now(self.timezone)
 
 def _make_partial_thunk(fn, args, kwargs):
     thunk = functools.update_wrapper(
