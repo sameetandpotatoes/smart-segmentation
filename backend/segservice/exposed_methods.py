@@ -1,3 +1,4 @@
+from datetime import datetime
 import operator
 from segservice import app
 
@@ -51,3 +52,10 @@ def calculate(c: Calculator):
     return c
 
 ### END EXAMPLE ###
+
+# This is for a health check and uses app.route instead of app.method
+@app.route("/is-up")
+def health_response():
+    return "Service is up at {}.\n".format(
+        app.now().strftime("%H:%M:%S %Z on %b %-d, %Y")
+    )
