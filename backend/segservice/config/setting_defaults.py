@@ -15,3 +15,6 @@ LOGFILE = '/var/log/segservice/service.log'
 # to provide the `"incremental": True` entry; that entry will be enforced by
 # the application.
 LOGGING_ADJUSTMENTS = None
+
+# This setting must be a string name of a timezone recognized by pytz
+TIMEZONE = 'UTC'
