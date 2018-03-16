@@ -31,7 +31,10 @@ server "159.89.136.237", roles: %w[app db web] # monolith-1
 # http://capistranorb.com/documentation/getting-started/configuration/
 # Feel free to add new variables to customise your setup.
 
-
+# Indicate that this stage deploys uwsgi in the virtualenv
+set :deploy_uwsgi, true
+# Name the systemd service to reload
+set :systemd_service, "uwsgi-smartseg.service"
 
 # Custom SSH Options
 # ==================
