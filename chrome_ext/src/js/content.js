@@ -1,29 +1,11 @@
-import $ from 'jquery';
+import cheerio from 'cheerio';
 import handlers from './modules/handlers';
 import msg from './modules/msg';
 
-/*
-  Content-script is called per page, this is where we get text page data and
-  send it to backend
-*/
-
-console.log('CONTENT SCRIPT WORKS!');
-
+console.log("Current page: " + window.location.href);
 msg.init('ct', handlers.create('ct'));
 
-console.log('jQuery version:', $().jquery);
-
-function getAllTextOnPage() {
-  var textContent = $('body').text();
-  textContent=textContent.replace(/<br>/gi, "\n");
-  textContent=textContent.replace(/<br\s\/>/gi, "\n");
-  textContent=textContent.replace(/<br\/>/gi, "\n");
-  //-- remove P and A tags but preserve what's inside of them
-  textContent=textContent.replace(/<p.*>/gi, "\n");
-  textContent=textContent.replace(/<a.*href="(.*?)".*>(.*?)<\/a>/gi, " $2 ($1)");
-  //-- remove all else
-  // textContent=textContent.replace(/<(?:.|\s)*?>/g, "");
-  //-- get rid of more than 2 multiple line breaks:
+function cleanText(textContent) {
   textContent=textContent.replace(/(?:(?:\r\n|\r|\n)\s*){2,}/gim, "\n\n");
   //-- get rid of more than 2 spaces:
   textContent=textContent.replace(/ +(?= )/g,'');
@@ -38,5 +20,15 @@ function getAllTextOnPage() {
   return textContent;
 }
 
-console.log("Current page: " + window.location.href);
-var textCurrentPage = getAllTextOnPage();
+function getTextOnCurrentPage() {
+	const $ = cheerio.load(document.body.innerHTML);
+  const TEXT_TAGS = ['ul', 'span', 'a', 'p'];
+
+  var textElements = TEXT_TAGS.map(tag => cleanText($(tag, 'body').text()));
+  var completeTextOnPageRaw = textElements.join("");
+  // TODO perhaps some more parsing / cleaning can be done here.
+  var completeTextNoImgTag = completeTextOnPageRaw.replace(/<img[^>]*>/g, '');
+  return completeTextNoImgTag;
+}
+
+console.log(getTextOnCurrentPage());
