@@ -14,54 +14,62 @@ function cleanText(rawText) {
 }
 
 function createSegmentButton() {
-  var a = document.createElement('span');
+  var a = document.createElement('a');
   var linkText = document.createTextNode('Segment this!');
   a.className = 'btn btn-success btn-segment';
   a.style.position = 'absolute';
+  a.href = "?#"
+  a.onClick =
   a.appendChild(linkText);
   return a;
 }
 
 function getSelectedTextFromEvent(e) {
-    const selectedText = (document.all)
-      ? document.selection.createRange().text
-      : document.getSelection();
-    if (!(selectedText && selectedText.toString() !== "")) {
-      return;
-    }
+  const selectedText = (document.all)
+    ? document.selection.createRange().text
+    : document.getSelection();
+  if (!(selectedText && selectedText.toString() !== "")) {
+    return;
+  }
 
-    console.log("Selected text: " + selectedText);
-    const highlightedSegment = selectedText.baseNode.data;
-    const startSelect = selectedText.baseOffset;
-    const lengthSelect = selectedText.toString().length;
+  console.log("Selected text: " + selectedText);
+  const highlightedSegment = selectedText.baseNode.data;
+  const startSelect = selectedText.baseOffset;
+  const lengthSelect = selectedText.toString().length;
 
-    // Find the first space after the highlighted segment
-    var distanceFromSelectToNextSpace =
-      highlightedSegment.substring(startSelect + lengthSelect, highlightedSegment.length).indexOf(" ");
-    if (distanceFromSelectToNextSpace == -1) {
-      distanceFromSelectToNextSpace = 0;
-    }
+  // Find the first space after the highlighted segment
+  var distanceFromSelectToNextSpace =
+    highlightedSegment.substring(startSelect + lengthSelect,
+                                 highlightedSegment.length)
+                      .indexOf(" ");
+  if (distanceFromSelectToNextSpace == -1) {
+    // Go to end of string, will round to entire string
+    distanceFromSelectToNextSpace = highlightedSegment.length;
+  }
 
-    // Find the last space before the start of the select.
-    // TODO find last punctuation actually?
-    var roundedBackWord =
-      highlightedSegment.substring(0, startSelect + 1).lastIndexOf(" ");
-    if (roundedBackWord == -1) {
-        roundedBackWord = startSelect;
-    }
+  // Find the last space before the start of the select.
+  // TODO find last punctuation actually?
+  var roundedBackWord =
+    highlightedSegment.substring(0, startSelect + 1).lastIndexOf(" ");
+  if (roundedBackWord == -1) {
+    roundedBackWord = 0;
+  }
 
-    var selectedPhrase =
-      highlightedSegment.substring(roundedBackWord, startSelect + lengthSelect + distanceFromSelectToNextSpace)
-                        .trim();
-    console.log("Selected phrase: " + selectedPhrase);
+  var selectedPhrase =
+    highlightedSegment.substring(roundedBackWord, startSelect + lengthSelect + distanceFromSelectToNextSpace)
+                      .trim();
+  console.log("Selected phrase: " + selectedPhrase);
 
-    var segmentButton = createSegmentButton();
-    segmentButton.style.top = e.clientX + "px";
-    segmentButton.style.left = e.clientY + "px";
-    // Remove previous segment buttons, add this one
-    $('.btn-segment').remove();
-    document.body.appendChild(segmentButton);
-    return selectedText;
+  var segmentButton = createSegmentButton();
+  segmentButton.style.top = e.clientY + "px";
+  segmentButton.style.left = e.clientX + "px";
+
+  return {
+    selectedText: selectedText,
+    selectedPhrase: selectedPhrase,
+    highlightedSegment: highlightedSegment,
+    segmentButton: segmentButton
+  };
 }
 
 function getTextOnCurrentPage() {
@@ -69,11 +77,12 @@ function getTextOnCurrentPage() {
   // We only care about text in the following HTML tags:
   const TEXT_TAGS = ['ul', 'span', 'a', 'p'];
   var textElements = TEXT_TAGS.map(tag => cleanText($(tag, 'body').text()));
-  var completeTextOnPageRaw = textElements.join("");
-
-  // TODO perhaps some more parsing / cleaning can be done here.
-  var completeTextNoImgTag = completeTextOnPageRaw.replace(/<img[^>]*>/g, '');
-  return completeTextNoImgTag;
+  // Put a space between different elements of the list. We can split on consecutive spaces later.
+  return (
+    textElements.join(" ")
+                .replace(/<img[^>]*>/g, '')
+                .replace( /([a-z])([A-Z])/g, "$1 $2")
+  );
 }
 
 export { getSelectedTextFromEvent, getTextOnCurrentPage };
