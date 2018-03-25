@@ -18,8 +18,7 @@ function createSegmentButton() {
   var linkText = document.createTextNode('Segment this!');
   a.className = 'btn btn-success btn-segment';
   a.style.position = 'absolute';
-  a.href = "?#"
-  a.onClick =
+  a.href = "?#";
   a.appendChild(linkText);
   return a;
 }
@@ -61,11 +60,11 @@ function getSelectedTextFromEvent(e) {
   console.log("Selected phrase: " + selectedPhrase);
 
   var segmentButton = createSegmentButton();
-  segmentButton.style.top = e.clientY + "px";
-  segmentButton.style.left = e.clientX + "px";
+  segmentButton.style.top = e.pageY + "px";
+  segmentButton.style.left = e.pageX + "px";
 
   return {
-    selectedText: selectedText,
+    selectedText: selectedText.toString(), // Calling toString actually returns the text that was highlighted by the user
     selectedPhrase: selectedPhrase,
     highlightedSegment: highlightedSegment,
     segmentButton: segmentButton
