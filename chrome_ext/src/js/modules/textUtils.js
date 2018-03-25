@@ -1,11 +1,12 @@
 import $ from 'jquery';
 import cheerio from 'cheerio';
 
+/* Cleans raw text with a pipeline of replacing mal-formatted input */
 function cleanText(rawText) {
   return (
     rawText.replace(/(?:(?:\r\n|\r|\n)\s*){2,}/gim, "\n\n")
            .replace(/ +(?= )/g,'') // Remove more than 2 spaces:
-           .replace(/&nbsp;/gi," ") // Remove html-encoded characters:
+           .replace(/&nbsp;/gi," ") // Remove html-encoded characters
            .replace(/&amp;/gi,"&")
            .replace(/&quot;/gi,'"')
            .replace(/&lt;/gi,'<')
@@ -13,10 +14,11 @@ function cleanText(rawText) {
   );
 }
 
+/* Creates a segmentation button withot assigning it a location */
 function createSegmentButton() {
   var a = document.createElement('a');
   var linkText = document.createTextNode('Segment this!');
-  a.className = 'btn btn-success btn-segment';
+  a.className = 'smart-seg-btn';
   a.style.position = 'absolute';
   a.href = "?#";
   a.appendChild(linkText);
@@ -72,6 +74,7 @@ function getSelectedTextFromEvent(e) {
 }
 
 function getTextOnCurrentPage() {
+  // Cheerio seems to work better than jQuery for getting text, so using that here
 	const $ = cheerio.load(document.body.innerHTML);
   // We only care about text in the following HTML tags:
   const TEXT_TAGS = ['ul', 'span', 'a', 'p'];

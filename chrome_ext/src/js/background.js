@@ -1,14 +1,5 @@
 console.log('BACKGROUND SCRIPT WORKS!');
 
-/*
-  This file exists in the entire chrome extension lifecycle.
-
-  I think this is where we want to communicate with backend, and do long-running
-  tasks.
-
-  We can use msg system to send messages to content
-*/
-
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     if (!sender.tab) {
@@ -21,11 +12,7 @@ chrome.runtime.onMessage.addListener(
       sendResponse({error: null, success: 'Sent text to backend!'});
     } else if (request.highlightedSegment) {
       console.log(request);
-      // TODO define API to segmentation
-      // Input: the beginning phrase to segment, the entire phrase it came from
 
-      // TODO send response to popup.html and fill it with this info.
-      // Response: original phrase, entire phrase, list of tuples of possible segments and their "heuristic", in sorted order
       var smartSegments = {
         selectedPhrase: "VivoBook",
         highlightedSegment: "ASUS VivoBook F510UA FHD Laptop, Intel Core i5-8250U, 8GB RAM, 1TB HDD, USB-C, NanoEdge Display, Fingerprint, Windows 10",
@@ -49,12 +36,10 @@ chrome.runtime.onMessage.addListener(
         ]
       };
 
-      chrome.runtime.openOptionsPage();
-      chrome.runtime.sendMessage({ segments: smartSegments }, function(response) {
-
-      });
+      // chrome.runtime.openOptionsPage();
+      console.log("Sending message");
+      sendResponse({ segments: smartSegments });
     } else if (request.feedback) {
-      // Input: List of segmentation choices and any user input given (bad/good), original phrase
-      // Response: ok, or something
+      // TODO implement
     }
 });

@@ -1,6 +1,4 @@
-// This is invoked when the "Smart-Segmentation" button on the Chrome toolbar is pressed.
-
-// We will use this to display results when a segmentation has been processed
-
 // Invoked when the smart segmentation button on the Chrome toolbar is clicked.
+
+// I don't see any use for this, except maybe to disable the plugin manually on a certain page.
 console.log('POPUP SCRIPT WORKS!');
