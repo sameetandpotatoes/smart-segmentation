@@ -40,6 +40,7 @@ To build production code + crx:
 Open Chrome, `Window` -> `Extensions`,
 `Load Unpacked Extension`, and select `./build/dev/manifest.json`
 
+**Note**: Since webpack is running, any time you make a change to a file and save it, it will re-compile the javascript. However, you *must* go to the chrome extension page and click "Reload changes" for the changes to take effect.
 
 ### Directory structure:
 

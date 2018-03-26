@@ -5,14 +5,14 @@ chrome.runtime.onMessage.addListener(
     if (!sender.tab) {
       sendResponse({error: "background script does not support requests from the extension at this time"});
     }
-    // sender.tab true so it came from the content script
+    // sender.tab is true so it came from the content script
 
     if (request.cleanedText) {
       // TODO make API request to backend to give data
       sendResponse({error: null, success: 'Sent text to backend!'});
     } else if (request.highlightedSegment) {
-      console.log(request);
 
+      // TODO make API request - this is hardcoded response data
       var smartSegments = {
         selectedPhrase: "VivoBook",
         highlightedSegment: "ASUS VivoBook F510UA FHD Laptop, Intel Core i5-8250U, 8GB RAM, 1TB HDD, USB-C, NanoEdge Display, Fingerprint, Windows 10",
@@ -36,8 +36,6 @@ chrome.runtime.onMessage.addListener(
         ]
       };
 
-      // chrome.runtime.openOptionsPage();
-      console.log("Sending message");
       sendResponse({ segments: smartSegments });
     } else if (request.feedback) {
       // TODO implement

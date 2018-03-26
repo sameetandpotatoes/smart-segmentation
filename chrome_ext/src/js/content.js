@@ -1,10 +1,14 @@
 import $ from 'jquery';
 import {
+  buttonClassName,
   getTextOnCurrentPage,
   getSelectedTextFromEvent } from './modules/textUtils';
 
+const modalClassName = 'myModal';
+let justHighlighted = false;
+
 function setUpModal(segments) {
-  $('#myModal').remove();
+  $('#' + modalClassName).remove();
 
   function getTextRow(phrase, score) {
     return (
@@ -29,7 +33,7 @@ function setUpModal(segments) {
 
   function getModalText() {
     return (
-      `<div id="myModal" class="modal">
+      `<div id="${modalClassName}" class="modal">
         <div class="modal-content">
           <div class="modal-header">
             <span class="close">&times;</span>
@@ -46,22 +50,22 @@ function setUpModal(segments) {
   }
   document.body.innerHTML += getModalText();
 
-  var modal = document.getElementById('myModal');
+  let modal = document.getElementById(modalClassName);
   // Get the button that opens the modal
 
   // Get the <span> element that closes the modal
-  var span = document.getElementsByClassName("close")[0]
-  ;
-  // When the user clicks on <span> (x), close the modal
+  let span = document.getElementsByClassName("close")[0];
+
+  // Close the modal on click
   span.onclick = function() {
-      modal.style.display = "none";
+    modal.style.display = "none";
   }
 
   // When the user clicks anywhere outside of the modal, close it
   window.onclick = function(event) {
-      if (event.target == modal) {
-          modal.style.display = "none";
-      }
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
   }
 
   segments.segmentations.forEach(function(segment) {
@@ -80,9 +84,13 @@ chrome.runtime.sendMessage({cleanedText: currentTextOnPage, currentPage: current
 });
 
 document.onmouseup = function(e) {
-  if ($(e.target).hasClass('smart-seg-btn')) {
-    e.preventDefault();
-    return;
+  // if ($(e.target).hasClass(buttonClassName)) {
+  //   e.preventDefault();
+  //   return;
+  // }
+  if (event.target !== $('.' + buttonClassName) && justHighlighted) {
+    $('.' + buttonClassName).remove();
+    justHighlighted = false;
   }
 
   let { selectedText: selectedText,
@@ -97,12 +105,13 @@ document.onmouseup = function(e) {
   console.log(segmentButton);
 
   // Remove previous segment button, add this one
-  $('.smart-seg-btn').remove();
+  $('.' + buttonClassName).remove();
   document.body.appendChild(segmentButton);
+  justHighlighted = true;
 
-  $('.smart-seg-btn').click(function(e) {
+  $('.' + buttonClassName).click(function(e) {
     e.preventDefault();
-    $('.smart-seg-btn').remove();
+    $('.' + buttonClassName).remove();
     chrome.runtime.sendMessage({selectedPhrase: phrase, highlightedSegment: segment}, function(response) {
       setUpModal(response.segments);
     });
