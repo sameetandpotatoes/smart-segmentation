@@ -1,14 +1,13 @@
 import $ from 'jquery';
 import {
-  buttonClassName,
+  buttonIdName,
   getTextOnCurrentPage,
   getSelectedTextFromEvent } from './modules/textUtils';
 
-const modalClassName = 'myModal';
-let justHighlighted = false;
+const modalIdName = 'myModal';
 
 function setUpModal(segments) {
-  $('#' + modalClassName).remove();
+  $('#' + modalIdName).remove();
 
   function getTextRow(phrase, score) {
     return (
@@ -33,7 +32,7 @@ function setUpModal(segments) {
 
   function getModalText() {
     return (
-      `<div id="${modalClassName}" class="smart-seg-modal">
+      `<div id="${modalIdName}" class="smart-seg-modal">
         <div class="smart-seg-modal-content">
           <div class="smart-seg-modal-header">
             <span class="smart-seg-close">&times;</span>
@@ -50,9 +49,7 @@ function setUpModal(segments) {
   }
   document.body.innerHTML += getModalText();
 
-  let modal = document.getElementById(modalClassName);
-  // Get the button that opens the modal
-
+  let modal = document.getElementById(modalIdName);
   // Get the <span> element that closes the modal
   let span = document.getElementsByClassName("smart-seg-close")[0];
 
@@ -61,17 +58,16 @@ function setUpModal(segments) {
     modal.style.display = "none";
   }
 
+  segments.segmentations.forEach(function(segment) {
+    $('.smart-seg-modal-body').append(getTextRow(segment.phrase, segment.score));
+  });
+
   // When the user clicks anywhere outside of the modal, close it
   window.onclick = function(event) {
     if (event.target == modal) {
       modal.style.display = "none";
     }
   }
-
-  segments.segmentations.forEach(function(segment) {
-    $('.smart-seg-modal-body').append(getTextRow(segment.phrase, segment.score));
-  });
-
   modal.style.display = "block";
 }
 
@@ -84,34 +80,23 @@ chrome.runtime.sendMessage({cleanedText: currentTextOnPage, currentPage: current
 });
 
 document.onmouseup = function(e) {
-  // TODO fix so that clicking elsewhere removes the button.
-  if ($(e.target).hasClass(buttonClassName)) {
-    e.preventDefault();
+  let button = document.getElementById(buttonIdName);
+  if (button) {
+    if (e.target == button) {
+      e.preventDefault();
+      chrome.runtime.sendMessage({selectedPhrase: button.dataset.phrase,
+                                  highlightedSegment: button.dataset.segment}, function(response) {
+        setUpModal(response.segments);
+      });
+    }
+    $('#' + buttonIdName).remove();
     return;
   }
 
-  let { selectedText: selectedText,
-        selectedPhrase: phrase,
-        highlightedSegment: segment,
-        segmentButton: segmentButton } = getSelectedTextFromEvent(e);
-
-  if (selectedText == null || phrase == null ||
-      segment == null || segmentButton == null) {
-    return;
+  let segmentButton = getSelectedTextFromEvent(e);
+  if (segmentButton !== null) {
+    document.body.appendChild(segmentButton);
   }
-
-  // Remove previous segment button, add this one
-  $('.' + buttonClassName).remove();
-  document.body.appendChild(segmentButton);
-  justHighlighted = true;
-
-  $('.' + buttonClassName).click(function(e) {
-    e.preventDefault();
-    $('.' + buttonClassName).remove();
-    chrome.runtime.sendMessage({selectedPhrase: phrase, highlightedSegment: segment}, function(response) {
-      setUpModal(response.segments);
-    });
-  });
 };
 
 if (!document.all) {

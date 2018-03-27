@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import cheerio from 'cheerio';
 
-const buttonClassName = 'smart-seg-btn';
+const buttonIdName = 'smart-seg-btn';
 const marginButtonX = 5;
 const marginButtonY = 2;
 
@@ -22,7 +22,7 @@ function cleanText(rawText) {
 function createSegmentButton() {
   var a = document.createElement('a');
   var linkText = document.createTextNode('Segment this!');
-  a.className = buttonClassName;
+  a.id = buttonIdName;
   a.style.position = 'absolute';
   a.href = "?#";
   a.appendChild(linkText);
@@ -34,12 +34,7 @@ function getSelectedTextFromEvent(e) {
     ? document.selection.createRange().text
     : document.getSelection();
   if (!(selectedText && selectedText.toString() !== "")) {
-    return {
-      selectedText: null,
-      selectedPhrase: null,
-      highlightedSegment: null,
-      segmentButton: null
-    };
+    return null;
   }
 
   console.log("Selected text: " + selectedText);
@@ -73,13 +68,10 @@ function getSelectedTextFromEvent(e) {
   var segmentButton = createSegmentButton();
   segmentButton.style.top = (e.pageY + marginButtonY) + "px";
   segmentButton.style.left = (e.pageX + marginButtonX) + "px";
+  segmentButton.dataset.phrase = selectedPhrase;
+  segmentButton.dataset.segment = highlightedSegment;
 
-  return {
-    selectedText: selectedText.toString(), // Calling toString actually returns the text that was highlighted by the user
-    selectedPhrase: selectedPhrase,
-    highlightedSegment: highlightedSegment,
-    segmentButton: segmentButton
-  };
+  return segmentButton;
 }
 
 function getTextOnCurrentPage() {
@@ -96,4 +88,4 @@ function getTextOnCurrentPage() {
   );
 }
 
-export { buttonClassName, getSelectedTextFromEvent, getTextOnCurrentPage };
+export { buttonIdName, getSelectedTextFromEvent, getTextOnCurrentPage };
