@@ -25,7 +25,13 @@
   }
 }
 
-.modal {
+/* Add Animation */
+@keyframes animatetop {
+  from {top: -300px; opacity: 0}
+  to {top: 0; opacity: 1}
+}
+
+.smart-seg-modal {
   display: none;
   position: fixed;
   z-index: 1000;
@@ -38,7 +44,7 @@
   background-color: rgba(0,0,0,0.4);
 }
 
-.modal-content {
+.smart-seg-modal-content {
   background-color: #fefefe;
   margin: 15% auto;
   padding: 20px;
@@ -46,37 +52,37 @@
   width: 80%;
 }
 
-.close {
+.smart-seg-close {
   color: #aaa;
   float: right;
   font-size: 28px;
   font-weight: bold;
 }
 
-.close:hover,
-.close:focus {
+.smart-seg-close:hover,
+.smart-seg-close:focus {
   color: black;
   text-decoration: none;
   cursor: pointer;
 }
 
-.modal-header {
+.smart-seg-modal-header {
   padding: 2px 16px;
   background-color: #5cb85c;
   color: white;
 }
 
-.modal-body {
+.smart-seg-modal-body {
   padding: 2px 16px;
 }
 
-.modal-footer {
+.smart-seg-modal-footer {
   padding: 2px 16px;
   background-color: #5cb85c;
   color: white;
 }
 
-.modal-content {
+.smart-seg-modal-content {
   position: relative;
   background-color: #fefefe;
   margin: auto;
@@ -86,10 +92,4 @@
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
   animation-name: animatetop;
   animation-duration: 0.4s
-}
-
-/* Add Animation */
-@keyframes animatetop {
-  from {top: -300px; opacity: 0}
-  to {top: 0; opacity: 1}
 }

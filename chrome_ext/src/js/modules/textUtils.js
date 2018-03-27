@@ -34,7 +34,12 @@ function getSelectedTextFromEvent(e) {
     ? document.selection.createRange().text
     : document.getSelection();
   if (!(selectedText && selectedText.toString() !== "")) {
-    return;
+    return {
+      selectedText: null,
+      selectedPhrase: null,
+      highlightedSegment: null,
+      segmentButton: null
+    };
   }
 
   console.log("Selected text: " + selectedText);

@@ -33,15 +33,15 @@ function setUpModal(segments) {
 
   function getModalText() {
     return (
-      `<div id="${modalClassName}" class="modal">
-        <div class="modal-content">
-          <div class="modal-header">
-            <span class="close">&times;</span>
+      `<div id="${modalClassName}" class="smart-seg-modal">
+        <div class="smart-seg-modal-content">
+          <div class="smart-seg-modal-header">
+            <span class="smart-seg-close">&times;</span>
             <h2>Modal Header</h2>
           </div>
-          <table class="modal-body">
+          <table class="smart-seg-modal-body">
           </table>
-          <div class="modal-footer">
+          <div class="smart-seg-modal-footer">
             <h3>Modal Footer</h3>
           </div>
         </div>
@@ -54,7 +54,7 @@ function setUpModal(segments) {
   // Get the button that opens the modal
 
   // Get the <span> element that closes the modal
-  let span = document.getElementsByClassName("close")[0];
+  let span = document.getElementsByClassName("smart-seg-close")[0];
 
   // Close the modal on click
   span.onclick = function() {
@@ -69,7 +69,7 @@ function setUpModal(segments) {
   }
 
   segments.segmentations.forEach(function(segment) {
-    $('.modal-body').append(getTextRow(segment.phrase, segment.score));
+    $('.smart-seg-modal-body').append(getTextRow(segment.phrase, segment.score));
   });
 
   modal.style.display = "block";
@@ -95,11 +95,10 @@ document.onmouseup = function(e) {
         highlightedSegment: segment,
         segmentButton: segmentButton } = getSelectedTextFromEvent(e);
 
-  // TODO perhaps do some error checking to make sure that text is highlighted
-  console.log(selectedText);
-  console.log(phrase);
-  console.log(segment);
-  console.log(segmentButton);
+  if (selectedText == null || phrase == null ||
+      segment == null || segmentButton == null) {
+    return;
+  }
 
   // Remove previous segment button, add this one
   $('.' + buttonClassName).remove();
