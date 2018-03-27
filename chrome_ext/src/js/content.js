@@ -84,13 +84,10 @@ chrome.runtime.sendMessage({cleanedText: currentTextOnPage, currentPage: current
 });
 
 document.onmouseup = function(e) {
-  // if ($(e.target).hasClass(buttonClassName)) {
-  //   e.preventDefault();
-  //   return;
-  // }
-  if (event.target !== $('.' + buttonClassName) && justHighlighted) {
-    $('.' + buttonClassName).remove();
-    justHighlighted = false;
+  // TODO fix so that clicking elsewhere removes the button.
+  if ($(e.target).hasClass(buttonClassName)) {
+    e.preventDefault();
+    return;
   }
 
   let { selectedText: selectedText,
