@@ -1,0 +1,95 @@
+#smart-seg-btn {
+  display: 'inline-block';
+  font-weight: 400;
+  text-align: 'center';
+  white-space: 'nowrap';
+  vertical-align: 'middle';
+  user-select: 'none';
+  border: 1px solid transparent;
+  position: 'absolute';
+  padding: .375rem .75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  text-decoration: none;
+  color: #fff !important;
+  background-color: #28a745;
+  border-color: #28a745;
+  border-radius: .25rem;
+  transition: color .15s ease-in-out, background-color .15s ease-in-out,
+              border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+  z-index: 1000;
+  &:hover {
+    cursor: pointer;
+    background-color: #1b702e;
+    border-color: #1b702e;
+  }
+}
+
+/* Add Animation */
+@keyframes animatetop {
+  from {top: -300px; opacity: 0}
+  to {top: 0; opacity: 1}
+}
+
+.smart-seg-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgb(0,0,0);
+  background-color: rgba(0,0,0,0.4);
+}
+
+.smart-seg-modal-content {
+  background-color: #fefefe;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+.smart-seg-close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.smart-seg-close:hover,
+.smart-seg-close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.smart-seg-modal-header {
+  padding: 2px 16px;
+  background-color: #5cb85c;
+  color: white;
+}
+
+.smart-seg-modal-body {
+  padding: 2px 16px;
+}
+
+.smart-seg-modal-footer {
+  padding: 2px 16px;
+  background-color: #5cb85c;
+  color: white;
+}
+
+.smart-seg-modal-content {
+  position: relative;
+  background-color: #fefefe;
+  margin: auto;
+  padding: 0;
+  border: 1px solid #888;
+  width: 80%;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+  animation-name: animatetop;
+  animation-duration: 0.4s
+}
