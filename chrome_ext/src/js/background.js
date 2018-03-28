@@ -1,8 +1,7 @@
 import $ from 'jquery';
 
 console.log('BACKGROUND SCRIPT WORKS!');
-
-const BACKEND_URL="http://localhost:5000"
+const BACKEND_URL = (process.env.NODE_ENV === 'development') ? "http://localhost:5000" : "https://smartseg.ga";
 
 function getUrl(sub_url) {
   return BACKEND_URL + sub_url;
