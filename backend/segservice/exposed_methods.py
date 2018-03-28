@@ -1,57 +1,40 @@
 from datetime import datetime
 import operator
+from flask import request, jsonify
 from segservice import app
 
-### BEGIN EXAMPLE ###
-# Uncomment the decorator line "@app.method(..." on the definition of
-# ``calculate`` below to activate this calculator.
+@app.route('/frequencies', methods=['POST'])
+def add_frequencies():
+    req_data = request.get_json(force=True)
+    # TODO store counts, remove common words, etc.
+    return jsonify("OK")
 
-class Calculator:
-    OPERATION_MAP = {
-        '+': operator.add,
-        '-': operator.sub,
-        '*': operator.mul,
-        '/': operator.truediv,
-    }
-    
-    def __init__(self, ):
-        self.stack = []
-        self.operation = None
-    
-    @classmethod
-    def from_request_data(cls, jd):
-        instance = cls()
-        instance.stack = jd['stack']
-        instance.operation = jd.get('operation')
-        return instance
-    
-    def to_response_data(self, ):
-        result = dict(
-            stack=self.stack,
-        )
-        if self.operation is not None:
-            result['operation'] = self.operation
-        return result
-    
-    def execute(self, ):
-        stack, op = self.stack, self.operation
-        if op not in self.OPERATION_MAP:
-            stack.append("unknown operation {!r}".format(op))
-        elif len(stack) < 2:
-            stack.append("stack underflow executing {!r}".format(op))
-        else:
-            try:
-                stack[-2:] = [self.OPERATION_MAP[op](*stack[-2:])]
-            except Exception as e:
-                stack.append("error executing {!r}: {}".format(op, e))
-        self.operation = None
-
-# @app.method("/calculate", non_qs_params=['stack'])
-def calculate(c: Calculator):
-    c.execute()
-    return c
-
-### END EXAMPLE ###
+@app.route('/segments', methods=['POST'])
+def get_segmentations():
+    req_data = request.get_json(force=True)
+    # Fetch sentence stream from backend? Initialize gensim, return results
+    return jsonify({
+        "selectedPhrase": "VivoBook",
+        "highlightedSegment": "ASUS VivoBook F510UA FHD Laptop, Intel Core i5-8250U, 8GB RAM, 1TB HDD, USB-C, NanoEdge Display, Fingerprint, Windows 10",
+        "segmentations": [
+          {
+            "phrase": "ASUS VivoBook",
+            "score": 0.8
+          },
+          {
+            "phrase": "VivoBook F510UA",
+            "score": 0.7
+          },
+          {
+            "phrase": "ASUS VivoBook F510UA FHD Laptop",
+            "score": 0.6
+          },
+          {
+            "phrase": "ASUS VivoBook F510UA FHD Laptop, Intel Core i5-8250U, 8GB RAM, 1TB HDD, USB-C, NanoEdge Display, Fingerprint, Windows 10",
+            "score": 0.3
+          }
+        ]
+    })
 
 # This is for a health check and uses app.route instead of app.method
 @app.route("/is-up")
