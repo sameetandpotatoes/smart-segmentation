@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import { copyToClipboard } from './modules/textUtils';
 
 console.log('BACKGROUND SCRIPT WORKS!');
 const BACKEND_URL = (process.env.NODE_ENV === 'development') ? "http://localhost:5000" : "https://smartseg.ga";
@@ -37,6 +38,30 @@ chrome.runtime.onMessage.addListener(
         }
       }).done(function(data) {
         console.log(data);
+
+        data.segmentations.forEach(function(segment, index) {
+          var segmentItem = {
+            "id": "segmentItem " + index,
+            "title": segment.phrase + " (" + segment.score + ")",
+            "contexts": ["selection"], // Only enabled for text selection (also through right-click)
+          };
+          chrome.contextMenus.create(segmentItem);
+        });
+
+        chrome.contextMenus.onClicked.addListener(function(info, tab) {
+            copyToClipboard(info.selectionText);
+
+            var notifOptions = {
+              type: 'basic',
+              iconUrl: 'https://cdn.business2community.com/wp-content/uploads/2018/01/segmentation_1515384711.png',
+              title: 'Copied text',
+              message: "Copied '" + info.selectionText + "' to the clipboard!"
+            };
+            chrome.notifications.create('selectionNotif', notifOptions);
+
+            // TODO send feedback back to backend
+          });
+
         sendResponse({ segments: data });
       });
     } else if (request.feedback) {

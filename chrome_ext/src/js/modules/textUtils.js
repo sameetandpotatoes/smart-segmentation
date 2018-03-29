@@ -18,6 +18,18 @@ function cleanText(rawText) {
   );
 }
 
+/* Copies text to the clipboard */
+function copyToClipboard(text) {
+  const input = document.createElement('input');
+  input.style.position = 'fixed';
+  input.style.opacity = 0;
+  input.value = text;
+  document.body.appendChild(input);
+  input.select();
+  document.execCommand('Copy');
+  document.body.removeChild(input);
+};
+
 /* Creates a segmentation button withot assigning it a location */
 function createSegmentButton() {
   var a = document.createElement('a');
@@ -180,4 +192,7 @@ function onlyAsciiContent(s) {
   return s.replace(/[^\x00-\x7F]/g, "");
 }
 
-export { buttonIdName, getSelectedTextFromEvent, getTextOnCurrentPage };
+export {
+  buttonIdName, copyToClipboard,
+  getSelectedTextFromEvent, getTextOnCurrentPage
+};

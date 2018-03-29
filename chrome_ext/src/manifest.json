@@ -16,7 +16,13 @@
   }],
   "options_page": "html/options.html",
   "devtools_page": "html/devtools.html",
-  "permissions": [ "activeTab", "tabs", "<all_urls>" ],
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "<all_urls>",
+    "contextMenus",
+    "notifications"
+  ],
   "web_accessible_resources": [ "js/*", "html/*", "css/*", "images/*" ],
   "content_security_policy": "script-src 'self'; object-src 'self'",
   "name": "<%= package.name %>",

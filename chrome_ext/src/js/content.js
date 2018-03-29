@@ -89,7 +89,7 @@ document.onmouseup = function(e) {
                                   selectedPhrase: button.dataset.phrase,
                                   highlightedSegment: button.dataset.segment}, function(response) {
         console.log(response);
-        setUpModal(response.segments);
+        // setUpModal(response.segments);
       });
     }
     $('#' + buttonIdName).remove();
