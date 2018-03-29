@@ -102,6 +102,13 @@ document.onmouseup = function(e) {
   }
 };
 
+document.oncontextmenu = function(e) {
+  var sel = (document.selection && document.selection.createRange().text) ||
+             (window.getSelection && window.getSelection().toString());
+  console.log(sel);
+  console.log(e.target);
+}
+
 if (!document.all) {
   document.captureEvents(Event.MOUSEUP);
 }
