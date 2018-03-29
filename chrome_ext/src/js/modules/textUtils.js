@@ -85,6 +85,7 @@ function getTextOnCurrentPage() {
     textElements.join(" ")
                 .replace(/<img[^>]*>/g, '')
                 .replace( /([a-z])([A-Z])/g, "$1 $2")
+                .replace(/[^\x00-\x7F]/g, "") // Remove non-ascii characters
   );
 }
 
