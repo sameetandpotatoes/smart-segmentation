@@ -17,6 +17,7 @@ provide "Install python-pip" apt-get install -y python-pip
 provide "Install python3-pip" apt-get install -y python3-pip
 provide "Upgrade python3-pip" pip3 install --upgrade pip
 provide "Install virtualenv and virtualenvwrapper" pip2 install virtualenv virtualenvwrapper
+provide "Install gensim" pip2 install gensim
 
 provide "Log directory for service" mkdir -m a=rwx /var/log/segservice
 #

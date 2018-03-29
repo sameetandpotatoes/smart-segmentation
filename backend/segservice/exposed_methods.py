@@ -2,38 +2,29 @@ from datetime import datetime
 import operator
 from flask import request, jsonify
 from segservice import app
+from segservice.phrase_detection import get_phrases_from_sentence
+from segservice.model import get_smart_segmentations
 
 @app.route('/frequencies', methods=['POST'])
 def add_frequencies():
     req_data = request.get_json(force=True)
-    # TODO store counts, remove common words, etc.
+    # TODO unused for now, will be used to store words per domain
     return jsonify("OK")
 
 @app.route('/segments', methods=['POST'])
 def get_segmentations():
     req_data = request.get_json(force=True)
-    # Fetch sentence stream from backend? Initialize gensim, return results
+    import ipdb; ipdb.set_trace()
+    full_line = req_data['highlightedSegment']
+    segmentations = get_phrases_from_sentence(req_data['text'], full_line)
+    selected_phrase = req_data['selectedPhrase']
+
+    smart_segs = get_smart_segmentations(segmentations, selected_phrase)
+
     return jsonify({
-        "selectedPhrase": "VivoBook",
-        "highlightedSegment": "ASUS VivoBook F510UA FHD Laptop, Intel Core i5-8250U, 8GB RAM, 1TB HDD, USB-C, NanoEdge Display, Fingerprint, Windows 10",
-        "segmentations": [
-          {
-            "phrase": "ASUS VivoBook",
-            "score": 0.8
-          },
-          {
-            "phrase": "VivoBook F510UA",
-            "score": 0.7
-          },
-          {
-            "phrase": "ASUS VivoBook F510UA FHD Laptop",
-            "score": 0.6
-          },
-          {
-            "phrase": "ASUS VivoBook F510UA FHD Laptop, Intel Core i5-8250U, 8GB RAM, 1TB HDD, USB-C, NanoEdge Display, Fingerprint, Windows 10",
-            "score": 0.3
-          }
-        ]
+        "selectedPhrase": selected_phrase,
+        "highlightedSegment": full_line,
+        "segmentations": smart_segs
     })
 
 # This is for a health check and uses app.route instead of app.method

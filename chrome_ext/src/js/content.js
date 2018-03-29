@@ -75,16 +75,18 @@ const currentUrl = window.location.href;
 console.log("Current page: " + currentUrl);
 
 var currentTextOnPage = getTextOnCurrentPage();
-chrome.runtime.sendMessage({cleanedText: currentTextOnPage, currentPage: currentUrl}, function(response) {
-  console.log(response);
-});
+// TODO uncomment when we have a storage model implemented so we can store text
+// chrome.runtime.sendMessage({cleanedText: currentTextOnPage, currentPage: currentUrl}, function(response) {
+//   console.log(response);
+// });
 
 document.onmouseup = function(e) {
   let button = document.getElementById(buttonIdName);
   if (button) {
     if (e.target == button) {
       e.preventDefault();
-      chrome.runtime.sendMessage({selectedPhrase: button.dataset.phrase,
+      chrome.runtime.sendMessage({text: currentTextOnPage,
+                                  selectedPhrase: button.dataset.phrase,
                                   highlightedSegment: button.dataset.segment}, function(response) {
         setUpModal(response.segments);
       });
