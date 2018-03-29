@@ -88,6 +88,7 @@ document.onmouseup = function(e) {
       chrome.runtime.sendMessage({text: currentTextOnPage,
                                   selectedPhrase: button.dataset.phrase,
                                   highlightedSegment: button.dataset.segment}, function(response) {
+        console.log(response);
         setUpModal(response.segments);
       });
     }

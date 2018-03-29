@@ -8,17 +8,16 @@ from segservice.model import get_smart_segmentations
 @app.route('/frequencies', methods=['POST'])
 def add_frequencies():
     req_data = request.get_json(force=True)
-    # TODO unused for now, will be used to store words per domain
+    # TODO unused for now, will be used to store words per domain in mongo
     return jsonify("OK")
 
 @app.route('/segments', methods=['POST'])
 def get_segmentations():
     req_data = request.get_json(force=True)
-    import ipdb; ipdb.set_trace()
     full_line = req_data['highlightedSegment']
     segmentations = get_phrases_from_sentence(req_data['text'], full_line)
     selected_phrase = req_data['selectedPhrase']
-
+    print(segmentations)
     smart_segs = get_smart_segmentations(segmentations, selected_phrase)
 
     return jsonify({
