@@ -1,57 +1,30 @@
 from datetime import datetime
 import operator
+from flask import request, jsonify
 from segservice import app
+from segservice.phrase_detection import get_phrases_from_sentence
+from segservice.model import get_smart_segmentations
 
-### BEGIN EXAMPLE ###
-# Uncomment the decorator line "@app.method(..." on the definition of
-# ``calculate`` below to activate this calculator.
+@app.route('/frequencies', methods=['POST'])
+def add_frequencies():
+    req_data = request.get_json(force=True)
+    # TODO unused for now, will be used to store words per domain in mongo
+    return jsonify("OK")
 
-class Calculator:
-    OPERATION_MAP = {
-        '+': operator.add,
-        '-': operator.sub,
-        '*': operator.mul,
-        '/': operator.truediv,
-    }
-    
-    def __init__(self, ):
-        self.stack = []
-        self.operation = None
-    
-    @classmethod
-    def from_request_data(cls, jd):
-        instance = cls()
-        instance.stack = jd['stack']
-        instance.operation = jd.get('operation')
-        return instance
-    
-    def to_response_data(self, ):
-        result = dict(
-            stack=self.stack,
-        )
-        if self.operation is not None:
-            result['operation'] = self.operation
-        return result
-    
-    def execute(self, ):
-        stack, op = self.stack, self.operation
-        if op not in self.OPERATION_MAP:
-            stack.append("unknown operation {!r}".format(op))
-        elif len(stack) < 2:
-            stack.append("stack underflow executing {!r}".format(op))
-        else:
-            try:
-                stack[-2:] = [self.OPERATION_MAP[op](*stack[-2:])]
-            except Exception as e:
-                stack.append("error executing {!r}: {}".format(op, e))
-        self.operation = None
+@app.route('/segments', methods=['POST'])
+def get_segmentations():
+    req_data = request.get_json(force=True)
+    full_line = req_data['highlightedSegment']
+    segmentations = get_phrases_from_sentence(req_data['text'], full_line)
+    selected_phrase = req_data['selectedPhrase']
+    print(segmentations)
+    smart_segs = get_smart_segmentations(segmentations, selected_phrase)
 
-# @app.method("/calculate", non_qs_params=['stack'])
-def calculate(c: Calculator):
-    c.execute()
-    return c
-
-### END EXAMPLE ###
+    return jsonify({
+        "selectedPhrase": selected_phrase,
+        "highlightedSegment": full_line,
+        "segmentations": smart_segs
+    })
 
 # This is for a health check and uses app.route instead of app.method
 @app.route("/is-up")

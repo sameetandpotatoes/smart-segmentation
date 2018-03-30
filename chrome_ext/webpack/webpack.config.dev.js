@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const path = require('path');
+const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const VersionFilePlugin = require('webpack-version-file-plugin');
 
@@ -23,6 +24,11 @@ module.exports = _.merge({}, config, {
       packageFile: path.resolve(__dirname, '../package.json'),
       template: path.resolve(__dirname, '../src/manifest.json'),
       outputFile: path.resolve(__dirname, '../build/dev/manifest.json'),
+    }),
+    new webpack.DefinePlugin({
+      'process.env': {
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
+      }
     })
   ],
   watch: true

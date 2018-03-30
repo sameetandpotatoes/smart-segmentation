@@ -133,14 +133,14 @@ function getTextFromElement(elt) {
   
   const ariaLabel = elt.attributes['aria-label'];
   if (ariaLabel) {
-    return ' ' + ariaLabel.value + ' ';
+    return ' ' + onlyAsciiContent(ariaLabel.value) + ' ';
   }
   
   const parts = [];
   for (const child of elt.childNodes) {
     switch (child.nodeType) {
       case elt.TEXT_NODE:
-        parts.push(child.nodeValue);
+        parts.push(onlyAsciiContent(child.nodeValue));
         break;
       
       case elt.ELEMENT_NODE:
@@ -162,6 +162,10 @@ function getTextFromElement(elt) {
   }
   
   return parts.join('').replace(/\s{2,}/g, ' ');
+}
+
+function onlyAsciiContent(s) {
+  return s.replace(/[^\x00-\x7F]/g, "");
 }
 
 export { buttonIdName, getSelectedTextFromEvent, getTextOnCurrentPage };
