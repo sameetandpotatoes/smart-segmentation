@@ -102,9 +102,43 @@ document.onmouseup = function(e) {
   }
 };
 
+$('a').hover(
+  function() {
+    if (this.classList.contains('modified')) {
+      return;
+    }
+    var words = this.text.split(" ");
+    var newText = "";
+    $.each(words, function(j, val) {
+      if (val !== "") {
+        newText = newText + "<span>" + val + "</span> ";
+      }
+    });
+
+    var t = $(this);
+    t.addClass('modified');
+    // Hide all children
+    t.children().css('display', 'none');
+    this.innerHTML += newText;
+  }, function() {
+    var t = $(this);
+    $('span', t).remove();
+    t.children().css('display', 'inherit');
+    t.removeClass('modified');
+  }
+);
+
 document.oncontextmenu = function(e) {
+  console.log(e.pageX + " "  + e.pageY);
+  console.log(e.clientX + " "  + e.clientY);
   var sel = (document.selection && document.selection.createRange().text) ||
              (window.getSelection && window.getSelection().toString());
+  var range = document.caretRangeFromPoint(e.clientX, e.clientY);
+  var selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  console.log(document.elementFromPoint(e.pageX, e.pageY));
   console.log(sel);
   console.log(e.target);
 }
