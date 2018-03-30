@@ -131,19 +131,20 @@ function getTextFromElement(elt) {
     return '';
   }
   
+  const ariaLabel = elt.attributes['aria-label'];
+  if (ariaLabel) {
+    return ' ' + ariaLabel.value + ' ';
+  }
+  
   const parts = [];
   for (const child of elt.childNodes) {
-    let ariaLabel;
-    
     switch (child.nodeType) {
       case elt.TEXT_NODE:
         parts.push(child.nodeValue);
         break;
       
       case elt.ELEMENT_NODE:
-        if (ariaLabel = elt.attributes['aria-label']) {
-          parts.push(ariaLabel.value);
-        } else if (elt.tagName == 'BR') {
+        if (elt.tagName == 'BR') {
           parts.push(' ');
         } else {
           let childText = getTextFromElement(child);
