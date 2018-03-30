@@ -1,10 +1,6 @@
 import $ from 'jquery';
 import cheerio from 'cheerio';
 
-const buttonIdName = 'smart-seg-btn';
-const marginButtonX = 5;
-const marginButtonY = 2;
-
 /* Cleans raw text with a pipeline of replacing mal-formatted input */
 function cleanText(rawText) {
   return (
@@ -51,12 +47,12 @@ function nonInlineAncestors(elt) {
       case 'inline':
         // Ignore this element
         break;
-      
+
       default:
         result.unshift(elt);
         break;
     }
-    
+
     elt = elt.parentNode;
   }
   return result;
@@ -103,7 +99,7 @@ function recordContaining(elt) {
       if ($elt.closest('.' + curClass)[0] !== ancestorElt) {
         continue;
       }
-      
+
       const classArea = occupiedSpace('.' + curClass);
       if (ancestorArea * 8 <= classArea) {
         // curClass is probably the "record class": it is on a block element
@@ -122,18 +118,14 @@ function getSelectedTextFromEvent(e) {
     return null;
   }
 
-  const highlightedSegment = document.getSelection().baseNode.data;
+  var selectedPhrase =
+    highlightedSegment.substring(roundedBackWord, startSelect + lengthSelect + distanceFromSelectToNextSpace)
+                      .trim();
 
-  var selectedPhrase = selectedText.trim();
-  console.log("Selected phrase: " + selectedPhrase);
-
-  var segmentButton = createSegmentButton();
-  segmentButton.style.top = (e.pageY + marginButtonY) + "px";
-  segmentButton.style.left = (e.pageX + marginButtonX) + "px";
-  segmentButton.dataset.phrase = selectedPhrase;
-  segmentButton.dataset.segment = highlightedSegment;
-
-  return segmentButton;
+  return {
+    phrase: selectedPhrase,
+    segment: highlightedSegment
+  };
 }
 
 function getTextOnCurrentPage() {
@@ -151,7 +143,7 @@ function getTextFromElement(elt) {
   if (eltStyle.visibility != 'visible') {
     return '';
   }
-  
+
   const ariaLabel = elt.attributes['aria-label'];
   if (ariaLabel) {
     return ' ' + onlyAsciiContent(ariaLabel.value) + ' ';
@@ -159,14 +151,14 @@ function getTextFromElement(elt) {
   if ((elt.attributes['aria-hidden'] || {}).value == 'true') {
     return '';
   }
-  
+
   const parts = [];
   for (const child of elt.childNodes) {
     switch (child.nodeType) {
       case elt.TEXT_NODE:
         parts.push(onlyAsciiContent(child.nodeValue));
         break;
-      
+
       case elt.ELEMENT_NODE:
         if (elt.tagName == 'BR') {
           parts.push(' ');
@@ -179,12 +171,12 @@ function getTextFromElement(elt) {
         break;
     }
   }
-  
+
   if (eltStyle.display != 'inline') {
     parts.unshift(' ');
     parts.push(' ');
   }
-  
+
   return parts.join('').replace(/\s{2,}/g, ' ');
 }
 
@@ -193,6 +185,5 @@ function onlyAsciiContent(s) {
 }
 
 export {
-  buttonIdName, copyToClipboard,
-  getSelectedTextFromEvent, getTextOnCurrentPage
+  copyToClipboard, getSelectedTextFromEvent, getTextOnCurrentPage
 };

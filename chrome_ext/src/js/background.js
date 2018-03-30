@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import { copyToClipboard } from './modules/textUtils';
+import { createNotif } from './modules/notificationGenerator.js';
 
 console.log('BACKGROUND SCRIPT WORKS!');
 const BACKEND_URL = (process.env.NODE_ENV === 'development') ? "http://localhost:5000" : "https://smartseg.ga";
@@ -28,6 +29,7 @@ chrome.runtime.onMessage.addListener(
         sendResponse({error: null, success: 'Sent text to backend!'});
       });
     } else if (request.highlightedSegment) {
+      createNotif('Segmentations created', 'Right click to view segmentations');
       $.ajax({
         method: "POST",
         url: getUrl('/segments'),
@@ -37,32 +39,27 @@ chrome.runtime.onMessage.addListener(
           'Content-Type': 'application/json'
         }
       }).done(function(data) {
-        console.log(data);
-
-        data.segmentations.forEach(function(segment, index) {
-          var segmentItem = {
-            "id": "segmentItem " + index,
-            "title": segment.phrase + " (" + segment.score + ")",
-            "contexts": ["selection"], // Only enabled for text selection (also through right-click)
-          };
-          chrome.contextMenus.create(segmentItem);
-        });
-
-        chrome.contextMenus.onClicked.addListener(function(info, tab) {
-            copyToClipboard(info.selectionText);
-
-            var notifOptions = {
-              type: 'basic',
-              iconUrl: 'https://cdn.business2community.com/wp-content/uploads/2018/01/segmentation_1515384711.png',
-              title: 'Copied text',
-              message: "Copied '" + info.selectionText + "' to the clipboard!"
+        chrome.contextMenus.removeAll(function() {
+          // After previous options were removed, add the new segmentations
+          data.segmentations.forEach(function(segment, index) {
+            var segmentItem = {
+              "id": "segmentItem " + index,
+              "title": segment.phrase + " (" + segment.score + ")",
+              "contexts": ["selection"], // Only enabled for text selection (also through right-click)
             };
-            chrome.notifications.create('selectionNotif', notifOptions);
+            chrome.contextMenus.create(segmentItem);
+          });
+
+          // Add a listener
+          chrome.contextMenus.onClicked.addListener(function(info, tab) {
+            console.log("Should be copying " + info.selectionText);
+            copyToClipboard(info.selectionText);
+            createNotif('Copied text', "Copied '" + info.selectionText + "' to the clipboard!");
 
             // TODO send feedback back to backend
           });
-
-        sendResponse({ segments: data });
+          sendResponse({ segments: data });
+        });
       });
     } else if (request.feedback) {
       // TODO implement
