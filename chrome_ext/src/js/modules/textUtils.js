@@ -96,7 +96,7 @@ function recordContaining(elt) {
 }
 
 function getSelectedTextFromEvent(e) {
-  const selectedText = getTextFromElement(recordContaining(e.target));
+  const selectedText = getTextFromElement(recordContaining(e.target)).trim();
   if (!(selectedText && selectedText.toString() !== "")) {
     return null;
   }
@@ -116,7 +116,7 @@ function getSelectedTextFromEvent(e) {
 }
 
 function getTextOnCurrentPage() {
-  return getTextFromElement(document.body);
+  return getTextFromElement(document.body).trim();
 }
 
 function getTextFromElement(elt) {
@@ -156,7 +156,7 @@ function getTextFromElement(elt) {
     parts.push(' ');
   }
   
-  return parts.join('').replace(/\s{2,}/g, ' ').trim();
+  return parts.join('').replace(/\s{2,}/g, ' ');
 }
 
 export { buttonIdName, getSelectedTextFromEvent, getTextOnCurrentPage };
