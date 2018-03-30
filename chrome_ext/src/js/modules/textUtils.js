@@ -144,6 +144,9 @@ function getTextFromElement(elt) {
   if (ariaLabel) {
     return ' ' + onlyAsciiContent(ariaLabel.value) + ' ';
   }
+  if ((elt.attributes['aria-hidden'] || {}).value == 'true') {
+    return '';
+  }
   
   const parts = [];
   for (const child of elt.childNodes) {
