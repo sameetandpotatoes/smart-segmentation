@@ -120,17 +120,43 @@ function getTextOnCurrentPage() {
 }
 
 function getTextFromElement(elt) {
-  // Cheerio seems to work better than jQuery for getting text, so using that here
-	const $ = cheerio.load(elt.innerHTML);
-  // We only care about text in the following HTML tags:
-  const TEXT_TAGS = ['ul', 'span', 'a', 'p'];
-  var textElements = TEXT_TAGS.map(tag => cleanText($(tag, 'body').text()));
-  // Put a space between different elements of the list. We can split on consecutive spaces later.
-  return (
-    textElements.join(" ")
-                .replace(/<img[^>]*>/g, '')
-                .replace( /([a-z])([A-Z])/g, "$1 $2")
-  );
+  const eltStyle = getComputedStyle(elt);
+  switch (eltStyle.display) {
+    case 'none':
+    case 'table-column-group':
+    case 'table-column':
+      return '';
+  }
+  if (eltStyle.visibility != 'visible') {
+    return '';
+  }
+  
+  const parts = [];
+  for (const child of elt.childNodes) {
+    switch (child.nodeType) {
+      case elt.TEXT_NODE:
+        parts.push(child.nodeValue);
+        break;
+      
+      case elt.ELEMENT_NODE:
+        if (elt.tagName == 'BR') {
+          parts.push(' ');
+        } else {
+          let childText = getTextFromElement(child);
+          if (childText) {
+            parts.push(childText);
+          }
+        }
+        break;
+    }
+  }
+  
+  if (eltStyle.display != 'inline') {
+    parts.unshift(' ');
+    parts.push(' ');
+  }
+  
+  return parts.join('').replace(/\s{2,}/g, ' ').trim();
 }
 
 export { buttonIdName, getSelectedTextFromEvent, getTextOnCurrentPage };
