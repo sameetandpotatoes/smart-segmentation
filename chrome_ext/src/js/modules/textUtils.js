@@ -73,9 +73,18 @@ function occupiedSpace(selector) {
 // represents one of several "records" on the page; default to the given
 // element if no such record is found.
 function recordContaining(elt) {
-  const $elt = $(elt);
+  const $elt = $(elt), eltRect = elt.getBoundingClientRect();
   for (const ancestorElt of nonInlineAncestors(elt)) {
-    let bestClass, maxArea = 0, ancestorArea = eltArea(ancestorElt);
+    const ancestorRect = ancestorElt.getBoundingClientRect();
+    if (
+      eltRect.top < ancestorRect.top ||
+      eltRect.left < ancestorRect.left ||
+      eltRect.bottom > ancestorRect.bottom ||
+      eltRect.right > ancestorRect.right
+    ) {
+      continue;
+    }
+    const ancestorArea = eltArea(ancestorElt);
     for (const curClass of Array.from(ancestorElt.classList)) {
       // Only look at classes for elements that are the tightest fit around
       // elt:
