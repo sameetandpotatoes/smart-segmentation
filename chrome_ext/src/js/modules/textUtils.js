@@ -1,11 +1,7 @@
 import $ from 'jquery';
 import cheerio from 'cheerio';
 
-const buttonIdName = 'smart-seg-btn';
-const marginButtonX = 5;
-const marginButtonY = 2;
-
-/* Cleans raw text with a pipeline of replacing mal-formatted input */
+// Cleans raw text with a pipeline of replacing mal-formatted input
 function cleanText(rawText) {
   return (
     rawText.replace(/(?:(?:\r\n|\r|\n)\s*){2,}/gim, "\n\n")
@@ -18,17 +14,6 @@ function cleanText(rawText) {
   );
 }
 
-/* Creates a segmentation button withot assigning it a location */
-function createSegmentButton() {
-  var a = document.createElement('a');
-  var linkText = document.createTextNode('Segment this!');
-  a.id = buttonIdName;
-  a.style.position = 'absolute';
-  a.href = "?#";
-  a.appendChild(linkText);
-  return a;
-}
-
 // Construct a DOM-descending list of all non-inline ancestors of the given
 // element
 function nonInlineAncestors(elt) {
@@ -39,12 +24,12 @@ function nonInlineAncestors(elt) {
       case 'inline':
         // Ignore this element
         break;
-      
+
       default:
         result.unshift(elt);
         break;
     }
-    
+
     elt = elt.parentNode;
   }
   return result;
@@ -91,7 +76,7 @@ function recordContaining(elt) {
       if ($elt.closest('.' + curClass)[0] !== ancestorElt) {
         continue;
       }
-      
+
       const classArea = occupiedSpace('.' + curClass);
       if (ancestorArea * 8 <= classArea) {
         // curClass is probably the "record class": it is on a block element
@@ -102,30 +87,6 @@ function recordContaining(elt) {
     }
   }
   return elt;
-}
-
-function getSelectedTextFromEvent(e) {
-  const selectedText = getTextFromElement(recordContaining(e.target)).trim();
-  if (!(selectedText && selectedText.toString() !== "")) {
-    return null;
-  }
-
-  const highlightedSegment = document.getSelection().baseNode.data;
-
-  var selectedPhrase = selectedText.trim();
-  console.log("Selected phrase: " + selectedPhrase);
-
-  var segmentButton = createSegmentButton();
-  segmentButton.style.top = (e.pageY + marginButtonY) + "px";
-  segmentButton.style.left = (e.pageX + marginButtonX) + "px";
-  segmentButton.dataset.phrase = selectedPhrase;
-  segmentButton.dataset.segment = highlightedSegment;
-
-  return segmentButton;
-}
-
-function getTextOnCurrentPage() {
-  return getTextFromElement(document.body).trim();
 }
 
 function getTextFromElement(elt) {
@@ -139,7 +100,7 @@ function getTextFromElement(elt) {
   if (eltStyle.visibility != 'visible') {
     return '';
   }
-  
+
   const ariaLabel = elt.attributes['aria-label'];
   if (ariaLabel) {
     return ' ' + onlyAsciiContent(ariaLabel.value) + ' ';
@@ -147,14 +108,14 @@ function getTextFromElement(elt) {
   if ((elt.attributes['aria-hidden'] || {}).value == 'true') {
     return '';
   }
-  
+
   const parts = [];
   for (const child of elt.childNodes) {
     switch (child.nodeType) {
       case elt.TEXT_NODE:
         parts.push(onlyAsciiContent(child.nodeValue));
         break;
-      
+
       case elt.ELEMENT_NODE:
         if (elt.tagName == 'BR') {
           parts.push(' ');
@@ -167,12 +128,12 @@ function getTextFromElement(elt) {
         break;
     }
   }
-  
+
   if (eltStyle.display != 'inline') {
     parts.unshift(' ');
     parts.push(' ');
   }
-  
+
   return parts.join('').replace(/\s{2,}/g, ' ');
 }
 
@@ -180,4 +141,67 @@ function onlyAsciiContent(s) {
   return s.replace(/[^\x00-\x7F]/g, "");
 }
 
-export { buttonIdName, getSelectedTextFromEvent, getTextOnCurrentPage };
+function getRecordTextFromEvent(e) {
+  return getTextFromElement(recordContaining(e.target)).trim();
+}
+
+function getRightClickedTextFromEvent(e) {
+  const selectedText = getRecordTextFromEvent(e);
+  if (!(selectedText && selectedText.toString() !== "")) {
+    return {
+      phrase: null,
+      segment: null
+    };
+  }
+  // TODO based on how we get user-selected text, this can be refactored
+  // into the below method
+  const userSelection = (document.selection && document.selection.createRange().text) ||
+                        (window.getSelection && window.getSelection().toString());
+
+  // Some logic will have to be done here to determine which is the user right-clicked word
+  // and which is the full selection (based on whether a link was right-clicked or not)
+  return {
+    phrase: userSelection.toString(),
+    segment: selectedText.toString()
+  };
+}
+
+function getSelectedTextFromEvent(e) {
+  const selectedText = getRecordTextFromEvent(e);
+  if (!(selectedText && selectedText.toString() !== "")) {
+    return {
+      phrase: null,
+      segment: null
+    };
+  }
+
+  const userSelection = (document.all)
+    ? document.selection.createRange().text
+    : document.getSelection();
+
+  return {
+    phrase: userSelection.toString(),
+    segment: selectedText.toString()
+  };
+}
+
+// Create an invisible input with the text, copy the text, and remove the input
+function copyToClipboard(text) {
+  const input = document.createElement('input');
+  input.style.position = 'fixed';
+  input.style.opacity = 0;
+  input.value = text;
+  document.body.appendChild(input);
+  input.select();
+  document.execCommand('Copy');
+  document.body.removeChild(input);
+};
+
+function getTextOnCurrentPage() {
+  return getTextFromElement(document.body).trim();
+}
+
+export {
+  copyToClipboard, getRightClickedTextFromEvent,
+  getSelectedTextFromEvent, getTextOnCurrentPage
+};
