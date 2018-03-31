@@ -11,19 +11,23 @@ def get_phrases_from_sentence(raw_page_text, sentence):
     reduced_page_text = clean_data(raw_page_text)
     lines = reduced_page_text.split('\n')
     sentence_stream = [line.lower().split() for line in lines]
+<<<<<<< HEAD
     sentence = sentence.encode("cp1252").decode() # fixed platform non-ascii encoding issues
     print("Sentence: \n{}".format(sentence))
     sent = sentence.lower().split()
     # all_segmentations = get_phrases_original(sentence, sentence_stream, sent)
     all_segmentations = get_phrases_test(sentence, sentence_stream, sent)
    
+=======
+    sentence = sentence.encode("utf-8").decode() # fixed platform non-ascii encoding issues
+    sent = sentence.lower().split()
+    all_segmentations = get_phrases_original(sentence, sentence_stream, sent)
+
+>>>>>>> clean up get_phrases
     # Remove duplicates by converting to a set before returning
     return list(set(all_segmentations))
 
 def get_phrases_test(sentence, sentence_stream, sent):
-    # TODO filter out inner lists that only contain one element,
-    # or maybe merge them with other one-element lists
-    # Ex: [ ... ['$'], ['100'], ['.00'] ... ]
     stop_words = get_stop_words('english')
     bigram = Phrases(sentence_stream, min_count=1, delimiter=b' ', common_terms = stop_words)
     trigram = Phrases(bigram[sentence_stream], min_count=1, delimiter=b' ')
@@ -51,9 +55,6 @@ def get_phrases_test(sentence, sentence_stream, sent):
 
 
 def get_phrases_original(sentence, sentence_stream, sent):
-     # TODO filter out inner lists that only contain one element,
-    # or maybe merge them with other one-element lists
-    # Ex: [ ... ['$'], ['100'], ['.00'] ... ]
     bigram = Phrases(sentence_stream, min_count=1, delimiter=b' ')
     trigram = Phrases(bigram[sentence_stream], min_count=1, delimiter=b' ')
     quadgram = Phrases(trigram[sentence_stream], min_count=1, threshold=0.001, delimiter=b' ')
@@ -67,16 +68,8 @@ def get_phrases_original(sentence, sentence_stream, sent):
 
     # Finally, a segmentation should contain the sentence itself.
     all_segmentations += [sentence.lower()]
-
-    remove_punct = str.maketrans('','',string.punctuation)
-    all_segmentations = [seg.translate(remove_punct) for seg in all_segmentations]
-
-    # Here for debugging purposes, remove when finalized
-    print("Bigrams: \n{}".format(bigrams_))
-    print("Trigrams: \n{}".format(trigrams_))
-    print("Quadgrams: \n{}".format(quadgrams_))
-
     return all_segmentations
+<<<<<<< HEAD
 
 def original_base_code():
     bigram = Phrases(sentence_stream)
@@ -86,3 +79,5 @@ def original_base_code():
     return bigram_phrases[sent]
 
 
+=======
+>>>>>>> clean up get_phrases
