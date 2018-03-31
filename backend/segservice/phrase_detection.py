@@ -11,11 +11,11 @@ def get_phrases_from_sentence(raw_page_text, sentence):
     reduced_page_text = clean_data(raw_page_text)
     lines = reduced_page_text.split('\n')
     sentence_stream = [line.lower().split() for line in lines]
-    sentence = sentence.encode("utf-8").decode() # fixed platform non-ascii encoding issues
+    sentence = sentence.encode("cp1252").decode() # fixed platform non-ascii encoding issues
     print("Sentence: \n{}".format(sentence))
     sent = sentence.lower().split()
-    all_segmentations = get_phrases_original(sentence, sentence_stream, sent)
-    get_phrases_test(sentence, sentence_stream, sent)
+    # all_segmentations = get_phrases_original(sentence, sentence_stream, sent)
+    all_segmentations = get_phrases_test(sentence, sentence_stream, sent)
    
     # Remove duplicates by converting to a set before returning
     return list(set(all_segmentations))
@@ -82,7 +82,6 @@ def original_base_code():
     bigram = Phrases(sentence_stream)
     bigram_phrases = Phraser(bigram)
     sent = sentence.lower().split()
-    print("Sent: {}".format(sent))
     print("test: \n{}".format(bigram_phrases[sent]))
     return bigram_phrases[sent]
 

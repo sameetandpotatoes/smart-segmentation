@@ -17,7 +17,7 @@ def get_segmentations():
     full_line = req_data['recordText']
     segmentations = get_phrases_from_sentence(req_data['text'], full_line)
     selected_phrase = req_data['userSelection']
-    smart_segs = get_smart_segmentations(segmentations, selected_phrase)
+    smart_segs = get_smart_segmentations(segmentations, selected_phrase, full_line)
 
     return jsonify({
         'userSelection': selected_phrase,
