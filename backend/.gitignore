@@ -2,3 +2,4 @@
 /segservice/config/local_config.py
 /Gemfile.deploy.lock
 /log/capistrano.log
+__pycache__

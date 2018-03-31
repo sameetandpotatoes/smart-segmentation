@@ -9,6 +9,18 @@ function getUrl(sub_url) {
   return BACKEND_URL + sub_url;
 }
 
+function sendRequestToBackend(subUrl, request, callback) {
+  $.ajax({
+    method: 'POST',
+    url: getUrl(subUrl),
+    data: JSON.stringify(request),
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  }).done(callback);
+}
+
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     if (!sender.tab) {
@@ -16,29 +28,13 @@ chrome.runtime.onMessage.addListener(
     }
     // sender.tab is true so it came from the content script
     if (request.cleanedText) {
-      $.ajax({
-        method: "POST",
-        url: getUrl('/frequencies'),
-        data: JSON.stringify(request),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      }).done(function(data) {
-        console.log(data);
-        sendResponse({error: null, success: 'Sent text to backend!'});
+      sendRequestToBackend('/frequencies', request, function(data) {
+        sendResponse('Sent text to backend!');
       });
-    } else if (request.highlightedSegment) {
+    } else if (request.recordText) {
       createNotif('Segmentations created', 'Right click to view segmentations');
-      $.ajax({
-        method: "POST",
-        url: getUrl('/segments'),
-        data: JSON.stringify(request),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      }).done(function(data) {
+
+      sendRequestToBackend('/segments', request, function(data) {
         chrome.contextMenus.removeAll(function() {
           // After previous options were removed, add the new segmentations
           data.segmentations.forEach(function(segment, index) {
@@ -50,19 +46,14 @@ chrome.runtime.onMessage.addListener(
             chrome.contextMenus.create(segmentItem);
           });
 
-          // Add a listener
           chrome.contextMenus.onClicked.addListener(function(info, tab) {
-            console.log("Should be copying " + info.selectionText);
             copyToClipboard(info.selectionText);
             createNotif('Copied text', "Copied '" + info.selectionText + "' to the clipboard!");
-
-            // TODO send feedback back to backend
+            // TODO implement send feedback to backend
           });
           sendResponse({ segments: data });
         });
       });
-    } else if (request.feedback) {
-      // TODO implement
     }
     // Needed because sendResponse (the callback) is used asynchronously now
     return true;
