@@ -3,7 +3,7 @@ import { getSelectedTextFromEvent } from './textUtils';
 function enableSelectionListener(sendSegEvent) {
   document.onmouseup = function(e) {
     let { phrase: phrase, segment: segment } = getSelectedTextFromEvent(e);
-    if (phrase !== null && segment !== null) {
+    if (phrase !== null && phrase !== "" && segment !== null) {
       sendSegEvent(phrase, segment);
     }
   };
