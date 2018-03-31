@@ -11,8 +11,6 @@ def get_phrases_from_sentence(raw_page_text, sentence):
     reduced_page_text = clean_data(raw_page_text)
     lines = reduced_page_text.split('\n')
     sentence_stream = [line.lower().split() for line in lines]
-    sentence = sentence.encode('ascii', errors="ignore").decode()
-    print("Sentence: \n{}".format(sentence))
     sent = sentence.lower().split()
     # all_segmentations = get_phrases_original(sentence, sentence_stream, sent)
     all_segmentations = get_phrases_test(sentence, sentence_stream, sent)
