@@ -24,7 +24,7 @@ function sendRequestToBackend(subUrl, request, callback) {
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     if (!sender.tab) {
-      sendResponse({error: "background script does not support requests from the extension at this time"});
+      sendResponse("background script does not support requests from the extension at this time");
     }
     // sender.tab is true so it came from the content script
     if (request.cleanedText) {
@@ -40,7 +40,7 @@ chrome.runtime.onMessage.addListener(
           data.segmentations.forEach(function(segment, index) {
             var segmentItem = {
               "id": "segmentItem " + index,
-              "title": segment.phrase + " (" + segment.score + ")",
+              "title": segment.formatted_phrase + " (" + segment.score + ")",
               "contexts": ["selection"], // Only enabled for text selection (also through right-click)
             };
             chrome.contextMenus.create(segmentItem);

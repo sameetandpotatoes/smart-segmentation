@@ -1,0 +1,37 @@
+- phrase: 'ASUS VivoBook F510UA FHD Laptop, Intel Core i5-8250U, 8GB RAM, 1TB HDD, USB-C, NanoEdge Display, Fingerprint, Windows 10, Star Gray (F510UA-AH51)'
+  segs:
+    - ASUS Vivo
+    - Intel Co
+- phrase: 'ASUS L402WA-EH21 Thin and Light 14" HD Laptop; AMD E2-6110 Quad Core 1.5GHz Processor,AMD Radeon R2 Graphics,4GB RAM,32GB eMMC Flash Storage,Windows 10 S with FREE 1yr Office 365 Subscription Included'
+  segs:
+    - Quad Core
+- phrase: '2018 Asus VivoBook Max 15.6 inch HD Flagship High Performance Laptop PC | Intel Pentium N4200 Quad-Core | 4GB RAM | 500GB HDD | Bang & Olufsen Audio | USB Type-C | DVD +/-RW | Windows 10'
+  segs:
+    - 500GB HDD
+- phrase: 'ASUS ZenBook Ultra-Slim Laptop, 13.3-inch Full HD, 8th gen Intel i5-8250U Processor, 8GB RAM, 256GB SSD, Backlit keyboard, Fingerprint Reader, Anti-Glare, Windows 10, Grey, UX330UA-AH55'
+  segs:
+    - ASUS ZenB
+- phrase: 'ASUS VivoBook Thin and Light Gaming Laptop, 15.6" Full HD, Intel Core i7-7700HQ Processor, 16GB DDR4 RAM, 256GB SSD+1TB HDD, GeForce GTX 1050 4GB, backlit keyboard - M580VD-EB76'
+  segs:
+    - ASUS
+- phrase: 'ASUS VivoBook Flip 15 TP510UA-RH31T 15.6" Thin and Lightweight 2-in-1 Full HD Touchscreen Laptop, Intel Core i3-7100U 2.4GHz Processor, 6GB DDR4 RAM, 1TB HDD,Windows 10 Home,Stylus,Fingerprint scanner'
+  segs:
+    - Touchscreen Laptop
+- phrase: 'Acer Aspire E 15 E5-575-33BM 15.6-Inch FHD Notebook (Intel Core i3-7100U 7th Generation , 4GB DDR4, 1TB 5400RPM HD, Intel HD Graphics 620, Windows 10 Home), Obsidian Black'
+  segs:
+    - Intel Cor
+- phrase: 'Asus GTX 1050'
+  segs:
+    - GTX 10
+- phrase: 'Apple - iPhone 8 Plus 256GB - Gold (Verizon)'
+  segs:
+    - iPhone 8
+- phrase: 'Apple - iPhone 8 Plus 256GB - Gold (AT&T)'
+  segs:
+    - ne 8 Plu
+- phrase: 'New! Apple - Pre-Owned Excellent iPhone 7 with 32GB Memory Cell Phone (Unlocked) - Gold'
+  segs:
+    - Memory Cell
+- phrase: 'Apple - iPhone SE 128GB - Silver (Sprint)'
+  segs:
+    - SE 128GB

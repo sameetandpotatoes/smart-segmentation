@@ -1,26 +1,32 @@
+def eval_phrase(segmentation_result, user_selected, record_text, match_phrases, nonmatch_phrases):
+    phrase = segmentation_result['phrase']
+    num_words_in_phrase = len(phrase.split(" "))
+    phrase_len = len(phrase)
 
+    score = (0.01 * phrase_len)
+    if phrase in match_phrases:
+        score = 0.3 + score / (0.75 * num_words_in_phrase)
+    elif any([partial in phrase for partial in user_selected.lower().split(" ")]):
+        score += 0.1
 
-def get_smart_segmentations(phrases, selected_phrase, full_line):
-    cleaned_phrases = []
-    for phrase in phrases:
-        cleaned_phrases.append(phrase.encode("utf-8").decode())
-    selected_phrase = selected_phrase.encode("utf-8").decode() # fixed platform non-ascii encoding issues
-    full_line = full_line.encode("utf-8").decode()
+    begin_phrase = record_text.lower().find(phrase)
+    segmentation_result['formatted_phrase'] = record_text[begin_phrase:begin_phrase + phrase_len]
+    segmentation_result['score'] = score
+    return score
 
+def get_smart_segmentations(segmentations, user_selected, full_line):
+    # segmentations are all in lowercase we need to lowercase the user_selected phrase too
+    lower_selected_phrase = user_selected.lower()
+    match_phrases = [p for p in segmentations if lower_selected_phrase in p]
+    nonmatch_phrases = [p for p in segmentations if lower_selected_phrase not in p]
 
-    print("Phrases: \n{}".format(cleaned_phrases))
-    print("Selected Phrases: \n{}".format(selected_phrase))
-    print("Full line: \n{}".format(full_line))
-    lower_selected_phrase = selected_phrase.lower()
-    good_phrases = [p for p in cleaned_phrases if lower_selected_phrase in p]
-    filtered_phrases = [p for p in cleaned_phrases if lower_selected_phrase not in p]
-    print("Good phrases: \n{}".format(good_phrases))
-    print("Filtered phrases: \n{}".format(filtered_phrases))
-    print("Index of selected")
     ordered_segs = []
-    for phrase in cleaned_phrases:
+    for phrase in segmentations:
         ordered_segs.append({
             'phrase': phrase,
-            'score': 0.8
+            'score': 0
         })
-    return sorted(ordered_segs, key=lambda x: x['score'])
+    return sorted(ordered_segs,
+                  key=lambda x: eval_phrase(x, user_selected, full_line,
+                                            match_phrases, nonmatch_phrases),
+                  reverse=True)
