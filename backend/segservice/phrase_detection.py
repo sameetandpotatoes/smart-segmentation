@@ -40,7 +40,4 @@ def get_phrases(sentence, sentence_stream, words):
     all_segmentations += [sentence.lower()]
 
     # Here for debugging purposes, remove when finalized
-    # print("Bigrams: \n{}".format(bigrams_))
-    # print("Trigrams: \n{}".format(trigrams_))
-    # print("Quadgrams: \n{}".format(quadgrams_))
     return all_segmentations

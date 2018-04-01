@@ -5,6 +5,7 @@
 - phrase: 'ASUS L402WA-EH21 Thin and Light 14" HD Laptop; AMD E2-6110 Quad Core 1.5GHz Processor,AMD Radeon R2 Graphics,4GB RAM,32GB eMMC Flash Storage,Windows 10 S with FREE 1yr Office 365 Subscription Included'
   segs:
     - Quad Core
+    - Thin
 - phrase: '2018 Asus VivoBook Max 15.6 inch HD Flagship High Performance Laptop PC | Intel Pentium N4200 Quad-Core | 4GB RAM | 500GB HDD | Bang & Olufsen Audio | USB Type-C | DVD +/-RW | Windows 10'
   segs:
     - 500GB HDD

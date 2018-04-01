@@ -15,7 +15,10 @@ def eval_phrase(segmentation_result, user_selected, record_text, match_phrases, 
         segmentation_result['type'] = 'no_match'
         pass
 
-    score = K + (0.01 * phrase_len) / (num_words_in_phrase ** 1.15)
+    if record_text.lower() == phrase:
+        score = K
+    else:
+        score = K + (0.01 * phrase_len) / (num_words_in_phrase ** 1.15)
 
     begin_phrase = record_text.lower().find(phrase)
     segmentation_result['formatted_phrase'] = record_text[begin_phrase:begin_phrase + phrase_len]
