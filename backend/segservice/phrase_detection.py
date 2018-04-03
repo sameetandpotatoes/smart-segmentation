@@ -44,8 +44,14 @@ def get_phrases(sentence, sentence_stream, words):
     # We don't want space if there's something else, but if there's nothing else then split on spaces
     if common_delimiter == ' ' and len(frequent_delimiters) == 2:
         common_delimiter, _ = frequent_delimiters[1]
-    all_segmentations.extend(sentence.lower().split(common_delimiter))
+
+    split_on_delimit = r"(\s+" + re.escape(common_delimiter) + "\s?)|(\s?" + re.escape(common_delimiter) + "\s+)"
+
+    for new_seg in set(re.split(split_on_delimit, sentence.lower())):
+        if new_seg is not None and common_delimiter is not new_seg.strip()[0]:
+            all_segmentations.append(new_seg)
     all_segmentations = [s.strip(common_delimiter).strip(string.whitespace) for s in all_segmentations]
+    print(all_segmentations)
     unique_segmentations = list(set(all_segmentations))
 
     # Finally, a segmentation should contain the record text itself.
