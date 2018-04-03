@@ -22,7 +22,7 @@ for product_line in products:
     for selected_phrase in product_line['segs']:
         print("INPUT: {}".format(selected_phrase))
         smart_segs = get_smart_segmentations(segmentations, selected_phrase, product_line['phrase'])
-        print("OUTPUT (top 3)")
-        for ss in smart_segs[:3]:
+        print("OUTPUT (top 10)")
+        for ss in smart_segs[:10]:
             print("- ({0: 6.2f}) P: {1}".format(float(ss['score']), ss['formatted_phrase']))
     print()
