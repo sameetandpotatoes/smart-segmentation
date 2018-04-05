@@ -2,59 +2,57 @@ import $ from 'jquery';
 import { getRightClickedTextFromEvent } from './textUtils';
 
 function enableRightClickListener(sendSegEvent) {
-  document.oncontextmenu = function(e) {
-    let { phrase: phrase, segment: segment } = getRightClickedTextFromEvent(e);
-    if (phrase !== null && segment !== null) {
-      sendSegEvent(phrase, segment);
+    // $('.a-link-normal.s-access-detail-page.s-color-twister-title-link.a-text-normal').lettering();
+    document.oncontextmenu = function(e) {
+        debugger;
     }
-  }
 }
 
-$('a').hover(
-  function() {
-    var words = this.text.split(" ");
-    function isEmpty(element, index, array) {
-      return element === "";
-    }
-    // If we already hovered over this, don't delete this again
-    if (this.classList.contains('modified') || words.every(isEmpty)) {
-      return;
-    }
+var wrapContent = (function() {
+  var oSpan = document.createElement('span');
+  oSpan.className = 'mySpanClass';
 
-    var newText = "";
-    $.each(words, function(j, val) {
-      if (val !== "") {
-        newText = newText + "<span class='smart-seg'>" + val + "</span> ";
+  var innerFunc = function(id) {
+    var el = (typeof id == 'string')? document.getElementById(id) : id;
+    var node, nodes = el && el.childNodes;
+    var span;
+
+    for (var i=0, iLen=nodes.length; i<iLen; i++) {
+      node = nodes[i];
+      if (node.nodeType == 3) {
+        // node.parentNode.insertBefore(span, node);
+        // span.appendChild(node);
+        var words = node.nodeValue.split(" ");
+        var parentNode = node.parentNode;
+        parentNode.removeChild(node);
+        words.forEach(function(word) {
+            span = oSpan.cloneNode(false);
+            span.appendChild(document.createTextNode(word + " "));
+            parentNode.appendChild(span);
+            // node.parentNode.insertBefore(span, document.createTextNode(word));
+            // span.appendChild(node);
+        });
+      } else {
+        innerFunc(node);
       }
+    }
+  };
+  return innerFunc;
+}());
+
+function wrapHTMLstring(s) {
+  var el = document.createElement('div');
+  el.innerHTML = s;
+  wrapContent(el);
+  return el.innerHTML;
+}
+
+$(document).ready(function() {
+    $("a").each(function() {
+        if (this.innerHTML !== "") {
+            this.innerHTML = wrapHTMLstring(this.innerHTML);
+        }
     });
-
-    var t = $(this);
-    t.addClass('modified');
-    // TODO go down to the TextNode that contains the text, and change HTML there.
-    // Hide all children
-
-    var noChildren = t.children().length == 0;
-    if (noChildren) {
-      this.innerHTML = newText;
-    } else {
-      t.children().css('display', 'none');
-      this.innerHTML += newText;
-    }
-  }, function() {
-    var t = $(this);
-    let contentText = this.text;
-    // Remove all spans created by this process
-    $('span.smart-seg', t).remove();
-
-    var noChildren = t.children().length == 0;
-    if (noChildren) {
-      this.innerHTML = contentText;
-    } else {
-      // Show children again
-      t.children().css('display', 'block');
-    }
-    t.removeClass('modified');
-  }
-);
+});
 
 export { enableRightClickListener };

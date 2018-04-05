@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import { getTextOnCurrentPage } from './modules/textUtils.js';
-import { enableSelectionListener } from './modules/selectionListener';
+// import { enableSelectionListener } from './modules/selectionListener';
+import { enableRightClickListener } from './modules/rightClickListener';
 
 let currentTextOnPage = null;
 
@@ -16,7 +17,7 @@ function sendSegEventToBackend(selection, record) {
   });
 }
 
-enableSelectionListener(sendSegEventToBackend);
+enableRightClickListener(sendSegEventToBackend);
 
 // TODO uncomment when we have a storage model implemented so we can store text and not send it per request
 // let currentTextOnPage = getTextOnCurrentPage();
