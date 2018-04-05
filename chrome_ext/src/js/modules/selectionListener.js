@@ -1,3 +1,4 @@
+import $ from 'jquery';
 import { getSelectedTextFromEvent } from './textUtils';
 
 function enableSelectionListener(sendSegEvent) {

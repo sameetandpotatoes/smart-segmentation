@@ -7,3 +7,4 @@ PyYAML==3.12
 Werkzeug==0.14.1
 pytz==2018.3
 gensim==3.4.0
+stop-words==2015.2.23.1

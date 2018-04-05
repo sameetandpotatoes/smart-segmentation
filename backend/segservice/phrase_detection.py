@@ -1,41 +1,59 @@
+import string
+import re
+from collections import Counter
 from gensim.models.phrases import Phraser
 from gensim.models import Phrases
-import string
+from stop_words import get_stop_words
 
 def clean_data(raw_page_text):
-    # TODO implement
-    return raw_page_text
+    translator = str.maketrans('', '', string.punctuation)
+    page_no_punct = raw_page_text.translate(translator)
+    # TODO regex to replace consecutive numbers with hashtag, but then it should join it with the next word
+    # return re.sub(r'\d+', '#', page_no_punct)
+    return page_no_punct
 
 def get_phrases_from_sentence(raw_page_text, sentence):
     reduced_page_text = clean_data(raw_page_text)
     lines = reduced_page_text.split('\n')
     sentence_stream = [line.lower().split() for line in lines]
-    # TODO filter out inner lists that only contain one element,
-    # or maybe merge them with other one-element lists
-    # Ex: [ ... ['$'], ['100'], ['.00'] ... ]
-    bigram = Phrases(sentence_stream, min_count=1, delimiter=b' ')
-    trigram = Phrases(bigram[sentence_stream], min_count=1, delimiter=b' ')
-    quadgram = Phrases(trigram[sentence_stream], min_count=1, threshold=0.001, delimiter=b' ')
+    words = sentence.lower().split()
 
-    all_segmentations = []
+    # Remove non-ascii characters so strings can be printed
+    sentence = sentence.encode('utf-8').decode()
     sent = sentence.lower().split()
-    bigrams_ = [b for b in bigram[sent] if b.count(' ') >= 1]
-    trigrams_ = [t for t in trigram[bigram[sent]] if t.count(' ') >= 2]
-    quadgrams_ = [t for t in quadgram[trigram[sent]] if t.count(' ') >= 3]
+    return get_phrases(sentence, sentence_stream, sent)
+
+def get_phrases(sentence, sentence_stream, words):
+    stop_words = get_stop_words('english')
+    bigram = Phrases(sentence_stream, min_count=1, delimiter=b' ', common_terms = stop_words)
+    trigram = Phrases(bigram[sentence_stream], min_count=1, delimiter=b' ', common_terms = stop_words)
+    quadgram = Phrases(trigram[sentence_stream], min_count=1, delimiter=b' ', common_terms = stop_words)
+    all_segmentations = []
+
+    bigrams_ = [b for b in bigram[words] if b.count(' ') >= 1]
+    trigrams_ = [t for t in trigram[bigram[words]] if t.count(' ') >= 2]
+    quadgrams_ = [t for t in quadgram[trigram[words]] if t.count(' ') >= 3]
     all_segmentations.extend(bigrams_)
     all_segmentations.extend(trigrams_)
     all_segmentations.extend(quadgrams_)
 
-    # Finally, a segmentation should contain the sentence itself.
-    all_segmentations += [sentence.lower()]
+    # Split on the most common punctuation in the record too
+    delimiters = re.findall(r'\W', sentence)
+    frequent_delimiters = Counter(delimiters).most_common(2)
+    common_delimiter, _ = frequent_delimiters[0]
+    # We don't want space if there's something else, but if there's nothing else then split on spaces
+    if common_delimiter == ' ' and len(frequent_delimiters) == 2:
+        common_delimiter, _ = frequent_delimiters[1]
 
-    remove_punct = str.maketrans('','',string.punctuation)
-    all_segmentations = [seg.translate(remove_punct) for seg in all_segmentations]
+        split_on_delimit = r"(\s+" + re.escape(common_delimiter) + "\s?)|(\s?" + re.escape(common_delimiter) + "\s+)"
 
-    # Here for debugging purposes, remove when finalized
-    print("Bigrams: \n{}".format(bigrams_))
-    print("Trigrams: \n{}".format(trigrams_))
-    print("Quadgrams: \n{}".format(quadgrams_))
+        for new_seg in set(re.split(split_on_delimit, sentence.lower())):
+            if new_seg is not None and common_delimiter is not new_seg.strip()[0]:
+                all_segmentations.append(new_seg)
+    all_segmentations = [s.strip(common_delimiter).strip(string.whitespace) for s in all_segmentations]
+    print(all_segmentations)
+    unique_segmentations = list(set(all_segmentations))
 
-    # Remove duplicates by converting to a set before returning
-    return list(set(all_segmentations))
+    # Finally, a segmentation should contain the record text itself.
+    unique_segmentations.append(sentence.lower())
+    return unique_segmentations

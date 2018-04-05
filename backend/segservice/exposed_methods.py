@@ -14,10 +14,11 @@ def add_frequencies():
 @app.route('/segments', methods=['POST'])
 def get_segmentations():
     req_data = request.get_json(force=True)
-    full_line = req_data['recordText']
-    segmentations = get_phrases_from_sentence(req_data['text'], full_line)
-    selected_phrase = req_data['userSelection']
-    smart_segs = get_smart_segmentations(segmentations, selected_phrase)
+    full_line = req_data['recordText'].encode('ascii', errors="ignore").decode()
+    page_text = req_data['text'].encode('ascii', errors="ignore").decode()
+    segmentations = get_phrases_from_sentence(page_text, full_line)
+    selected_phrase = req_data['userSelection'].encode('ascii', errors="ignore").decode().strip()
+    smart_segs = get_smart_segmentations(segmentations, selected_phrase, full_line)
 
     return jsonify({
         'userSelection': selected_phrase,
