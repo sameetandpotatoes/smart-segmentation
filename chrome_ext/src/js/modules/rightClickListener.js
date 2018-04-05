@@ -6,7 +6,7 @@ import { wrapHTMLString,
 function enableRightClickListener(sendSegEvent) {
     document.oncontextmenu = function(e) {
         let wordSelected = $(e.target).text().trim();
-        let recordText = getRecordTextFromEvent(e);
+        let segment = getRecordTextFromEvent(e);
 
         if (wordSelected.split(" ").length != 1) {
             var s = window.getSelection();
@@ -29,15 +29,16 @@ function enableRightClickListener(sendSegEvent) {
 
         // TODO remove punctuation from wordSelected
         console.log(wordSelected);
-        console.log(recordText);
+        console.log(segment);
+        if (wordSelected !== "" && segment !== null) {
+          sendSegEvent(wordSelected, segment);
+        }
     }
 }
 
 $(document).ready(function() {
     $('a').each(function() {
         if (this.innerHTML !== "") {
-            // console.log(wrapHTMLString($('body').html()));
-            // $('body').html(wrapHTMLString($('body').html()));
             this.innerHTML = wrapHTMLString(this.innerHTML);
         }
     });
