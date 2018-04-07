@@ -33,11 +33,21 @@ for product_line in products:
                                                              user_selection,
                                                              product_line['phrase']))
         assert(len(answers) > 0 and len(smart_segs) > 0)
-        num_in_answers = sum([exp in answers for exp in smart_segs if answers is not None])
-        num_correct = sum([exp == actual for exp, actual in zip(smart_segs, answers)])
+        num_in_answers = 0
+        num_correct = 0
+        precision_at_k = [0] * len(answers)
+        i = 0
+        for exp, actual in zip(smart_segs, answers):
+            if exp in answers:
+                num_in_answers += 1
+            if exp == actual:
+                num_correct += 1
+            precision_at_k[i] = num_correct / (i + 1)
+            i += 1
+
         recall = "{:.2f}".format(num_in_answers / len(answers))
         precision = "{:.2f}".format(num_correct / len(answers))
-
+        map = "{:.2f}".format(sum(precision_at_k) / len(precision_at_k))
         print("{}\t{}\t{}\t{}\t{}".format(product_line['phrase'].ljust(p_len)[:p_len],
                                           user_selection.ljust(i_len)[:i_len],
-                                          recall, precision, "N/A"))
+                                          recall, precision, map))
