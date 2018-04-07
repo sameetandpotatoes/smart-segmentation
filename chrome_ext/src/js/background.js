@@ -21,6 +21,27 @@ function sendRequestToBackend(subUrl, request, callback) {
   }).done(callback);
 }
 
+// When a user wants to segment, they ask for data from content.js,
+// and then load segmentation mode
+var segmentItem = {
+"id": "segmentItem",
+"title": "Enter Segmentation Mode",
+"contexts": ["all"], // TODO make it only available for right-click? Not sure of options right now
+};
+chrome.contextMenus.create(segmentItem);
+
+chrome.contextMenus.onClicked.addListener(function(info, tab) {
+    // Get the segmentation data from the active tab
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, {}, function(response) {
+            sendRequestToBackend('/segments', response, function(data) {
+                // TODO show segmentations in modal or something
+                console.log(data);
+            });
+        });
+    });
+});
+
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     if (!sender.tab) {
@@ -31,30 +52,7 @@ chrome.runtime.onMessage.addListener(
       sendRequestToBackend('/frequencies', request, function(data) {
         sendResponse('Sent text to backend!');
       });
-    } else if (request.recordText) {
-      createNotif('Segmentations created', 'Right click to view segmentations');
-
-      sendRequestToBackend('/segments', request, function(data) {
-        chrome.contextMenus.removeAll(function() {
-          // After previous options were removed, add the new segmentations
-          data.segmentations.forEach(function(segment, index) {
-            var segmentItem = {
-              "id": "segmentItem " + index,
-              "title": segment.formatted_phrase + " (" + segment.score + ")",
-              "contexts": ["selection"], // Only enabled for text selection (also through right-click)
-            };
-            chrome.contextMenus.create(segmentItem);
-          });
-
-          chrome.contextMenus.onClicked.addListener(function(info, tab) {
-            copyToClipboard(info.selectionText);
-            createNotif('Copied text', "Copied '" + info.selectionText + "' to the clipboard!");
-            // TODO implement send feedback to backend
-          });
-          sendResponse({ segments: data });
-        });
-      });
     }
-    // Needed because sendResponse (the callback) is used asynchronously now
+    // Needed because sendResponse (the callback) is used asynchronously
     return true;
 });

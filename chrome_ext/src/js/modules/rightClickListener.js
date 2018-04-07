@@ -26,8 +26,8 @@ function enableRightClickListener(sendSegEvent) {
             var str = range.toString().trim();
             wordSelected = str;
         }
-
-        // TODO remove punctuation from wordSelected
+        // Remove punctuation from string in case that was part of the word
+        wordSelected = wordSelected.replace(/[^A-Za-z0-9_]/g, "");
         console.log(wordSelected);
         console.log(segment);
         if (wordSelected !== "" && segment !== null) {
@@ -39,6 +39,7 @@ function enableRightClickListener(sendSegEvent) {
 $(document).ready(function() {
     $('a').each(function() {
         if (this.innerHTML !== "") {
+            // Wrap each link so that spans are on the lowest level above text node
             this.innerHTML = wrapHTMLString(this.innerHTML);
         }
     });

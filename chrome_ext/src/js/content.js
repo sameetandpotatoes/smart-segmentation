@@ -5,17 +5,24 @@ import { enableRightClickListener } from './modules/rightClickListener';
 
 let currentTextOnPage = null;
 
+let savedInfo = null;
+
 // Takes a phrase and a segment and sends it to the backend
 function sendSegEventToBackend(selection, record) {
   if (currentTextOnPage === null) {
     currentTextOnPage = getTextOnCurrentPage();
   }
-  chrome.runtime.sendMessage({text: currentTextOnPage,
-                              userSelection: selection,
-                              recordText: record}, function(response) {
-    console.log(response);
-  });
+  // Save the info so that when the backend asks for it, it can provide this
+  savedInfo = {text: currentTextOnPage,
+               userSelection: selection,
+               recordText: record};
 }
+
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+      sendResponse(savedInfo)
+  }
+);
 
 enableRightClickListener(sendSegEventToBackend);
 
