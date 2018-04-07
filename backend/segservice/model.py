@@ -41,3 +41,7 @@ def get_smart_segmentations(segmentations, user_selected, full_line):
                   key=lambda x: eval_phrase(x, user_selected, full_line,
                                             match_phrases, nonmatch_phrases),
                   reverse=True)
+
+
+def only_full_match(segmentations):
+    return [s['formatted_phrase'] for s in segmentations if s['type'] == 'full_match']
