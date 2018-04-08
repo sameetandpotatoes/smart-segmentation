@@ -1,7 +1,9 @@
+import yaml
+import textwrap
 from segservice.phrase_detection import get_phrases_from_sentence
 from segservice.model import get_smart_segmentations, only_full_match
-import yaml
 
+# Pretty-print with colors
 GREEN = '\033[92m'
 RED = '\033[91m'
 BOLD = '\033[36m' + '\033[1m'
@@ -12,15 +14,7 @@ print_map = True
 with open('data/raw_page_data.dat') as file:
     data_stream = file.read().strip()
 
-try:
-    products = yaml.load(open('data/test_segs.yaml'))
-except yaml.YAMLError as e:
-    print("Parsing YAML string failed")
-    print("Reason:", e.reason)
-    print("At position: {0} with encoding {1}".format(e.position, e.encoding))
-    print("Invalid char code:", e.character)
-    exit(1)
-
+products = yaml.load(open('data/test_segs.yaml'))
 
 for product_line in products:
     segmentations = get_phrases_from_sentence(data_stream, product_line['phrase'])
@@ -50,7 +44,6 @@ for product_line in products:
         recall = "{:.2f}".format(num_in_answers / len(answers))
         precision = "{:.2f}".format(num_correct / len(answers))
 
-        # TODO print map values
         if print_map:
             ll = 50
             i = 0
@@ -66,6 +59,12 @@ for product_line in products:
 
         p_len, i_len = (50, 20)
         print(BOLD + "Product".ljust(p_len) + "\tInput".ljust(i_len) + "\tRecall\tPrec.\tMAP" + END)
-        print("{}\t{}\t{}\t{}\t{}".format(product_line['phrase'].ljust(p_len)[:p_len],
+
+        full_product = textwrap.fill(product_line['phrase'], p_len)
+        first_nl = full_product.index("\n") if "\n" in full_product else len(full_product)
+
+        product_first_line = full_product[:first_nl].ljust(p_len).replace(user_selection, BOLD + user_selection + END)
+        product_rest = full_product[first_nl:].replace(user_selection, BOLD + user_selection + END)
+        print("{}\t{}\t{}\t{}\t{}".format(product_first_line,
                                           user_selection.ljust(i_len)[:i_len],
-                                          recall, precision, map))
+                                          recall, precision, map) + product_rest)

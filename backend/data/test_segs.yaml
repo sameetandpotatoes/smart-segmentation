@@ -1,7 +1,7 @@
 - phrase: 'ASUS VivoBook F510UA FHD Laptop, Intel Core i5-8250U, 8GB RAM, 1TB HDD, USB-C, NanoEdge Display, Fingerprint, Windows 10, Star Gray (F510UA-AH51)'
   segs:
     - segment:
-        id: 'ASUS Vivo'
+        id: 'ASUS'
         answers:
             - 'ASUS VivoBook'
             - 'ASUS VivoBook F510UA FHD'
@@ -14,8 +14,9 @@
 - phrase: 'ASUS L402WA-EH21 Thin and Light 14" HD Laptop; AMD E2-6110 Quad Core 1.5GHz Processor,AMD Radeon R2 Graphics,4GB RAM,32GB eMMC Flash Storage,Windows 10 S with FREE 1yr Office 365 Subscription Included'
   segs:
     - segment:
-        id: 'Quad Core'
+        id: 'Quad'
         answers:
+            - 'Quad Core'
             - 'Quad Core 1.5GHz Processor'
             - 'AMD E2-6110 Quad Core'
             - 'AMD E2-6110 Quad Core 1.5GHz Processor'
@@ -87,12 +88,14 @@
     - segment:
         id: 'Gold'
         answers:
+            - 'Gold (AT&T)'
 - phrase: 'New! Apple - Pre-Owned Excellent iPhone 7 with 32GB Memory Cell Phone (Unlocked) - Gold'
   segs:
     - segment:
         id: 'iPhone'
         answers:
             - 'iPhone 7'
+            - 'Pre-Owned Excellent iPhone 7 with 32GB Memory Cell Phone (Unlocked)'
 - phrase: 'Apple - iPhone SE 128GB - Silver (Sprint)'
   segs:
     - segment:
