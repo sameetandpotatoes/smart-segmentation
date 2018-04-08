@@ -5,6 +5,13 @@ from model import get_smart_segmentations, only_full_match
 import yaml
 import IPython
 
+GREEN = '\033[92m'
+RED = '\033[91m'
+BOLD = '\033[36m' + '\033[1m'
+END = '\033[0m'
+
+print_map = True
+
 with open('raw_page_data.dat') as file:
     data_stream = file.read().strip()
 
@@ -17,9 +24,7 @@ except yaml.YAMLError as e:
     print("Invalid char code:", e.character)
     exit(1)
 
-p_len, i_len = (50, 20)
 
-print("Product".ljust(p_len) + "\tInput".ljust(i_len) + "\tRecall\tPrec.\tMAP")
 for product_line in products:
     segmentations = get_phrases_from_sentence(data_stream, product_line['phrase'])
     for selected_phrase in product_line['segs']:
@@ -47,7 +52,23 @@ for product_line in products:
 
         recall = "{:.2f}".format(num_in_answers / len(answers))
         precision = "{:.2f}".format(num_correct / len(answers))
+
+        # TODO print map values
+        if print_map:
+            ll = 50
+            i = 0
+            print(BOLD + "\nAnswers".ljust(ll) + "\tSegmentation".ljust(ll) + "\tP@K" + END)
+            for exp, actual in zip(smart_segs, answers):
+                print("{}{}\t{}\t{:.2f}".format(GREEN if actual == exp else RED,
+                                            actual.ljust(ll)[:ll],
+                                            exp.ljust(ll)[:ll],
+                                            precision_at_k[i]) + END)
+                i += 1
+
         map = "{:.2f}".format(sum(precision_at_k) / len(precision_at_k))
+
+        p_len, i_len = (50, 20)
+        print(BOLD + "Product".ljust(p_len) + "\tInput".ljust(i_len) + "\tRecall\tPrec.\tMAP" + END)
         print("{}\t{}\t{}\t{}\t{}".format(product_line['phrase'].ljust(p_len)[:p_len],
                                           user_selection.ljust(i_len)[:i_len],
                                           recall, precision, map))
