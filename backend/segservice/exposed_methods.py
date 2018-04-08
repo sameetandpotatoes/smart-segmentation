@@ -12,7 +12,7 @@ def add_frequencies(req_data):
 
 class SegmentRequest:
     @classmethod
-    def from_json_data(cls, req_data):
+    def from_request_data(cls, req_data):
         return cls(req_data)
     
     def __init__(self, req_data):
