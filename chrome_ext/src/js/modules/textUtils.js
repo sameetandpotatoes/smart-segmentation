@@ -145,6 +145,53 @@ function getRecordTextFromEvent(e) {
   return getTextFromElement(recordContaining(e.target)).trim();
 }
 
+function wrapHTMLString(s) {
+    var el = document.createElement('div');
+    el.innerHTML = s;
+
+    var wrapContent = (function() {
+        var oSpan = document.createElement('span');
+        oSpan.className = 'ss-id';
+
+        var fn = function(id) {
+            var el = (typeof id == 'string') ? document.getElementById(id) : id;
+            var node, nodes = el && el.childNodes;
+            var span;
+
+            for (var i=0, iLen=nodes.length; i<iLen; i++) {
+                node = nodes[i];
+                if (node.tagName === "SCRIPT") {
+                    continue;
+                }
+                switch(node.nodeType) {
+                    case Node.TEXT_NODE:
+                        const delimiter = " ";
+                        var words = node.nodeValue.split(delimiter);
+                        var parentNode = node.parentNode;
+                        // Remove current text node, add a span and a text node for each word
+                        parentNode.removeChild(node);
+                        words.forEach(function(word, index, array) {
+                            span = oSpan.cloneNode(false);
+                            span.appendChild(
+                                document.createTextNode(index == array.length - 1
+                                                        ? word
+                                                        : word + delimiter)
+                            );
+                            parentNode.appendChild(span);
+                        });
+                        break;
+                    default:
+                        fn(node);
+                }
+            }
+        };
+        return fn;
+    }());
+
+    wrapContent(el);
+    return el.innerHTML;
+}
+
 function getRightClickedTextFromEvent(e) {
   const selectedText = getRecordTextFromEvent(e);
   if (!(selectedText && selectedText.toString() !== "")) {
@@ -202,6 +249,7 @@ function getTextOnCurrentPage() {
 }
 
 export {
-  copyToClipboard, getRightClickedTextFromEvent,
-  getSelectedTextFromEvent, getTextOnCurrentPage
+  copyToClipboard, wrapHTMLString, recordContaining,
+  getRightClickedTextFromEvent, getSelectedTextFromEvent,
+  getRecordTextFromEvent, getTextOnCurrentPage
 };

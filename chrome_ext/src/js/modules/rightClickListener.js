@@ -1,60 +1,67 @@
 import $ from 'jquery';
-import { getRightClickedTextFromEvent } from './textUtils';
+import {
+    wrapHTMLString, recordContaining,
+    getRecordTextFromEvent,
+    getRightClickedTextFromEvent } from './textUtils';
+
+var keysPressed = {}; // Map of key codes to booleans
+document.onkeydown = document.onkeyup = function(e) {
+    keysPressed[e.keyCode] = e.type == 'keydown';
+}
+const ctrlKeyCode = 17;
+const altKeyCode = 18;
 
 function enableRightClickListener(sendSegEvent) {
-  document.oncontextmenu = function(e) {
-    let { phrase: phrase, segment: segment } = getRightClickedTextFromEvent(e);
-    if (phrase !== null && segment !== null) {
-      sendSegEvent(phrase, segment);
+    document.oncontextmenu = function(e) {
+        let wordSelected = $(e.target).text().trim();
+        let segment = getRecordTextFromEvent(e);
+
+        if (wordSelected.split(" ").length != 1) {
+            var s = window.getSelection();
+            var range = s.getRangeAt(0);
+            var node = s.anchorNode;
+            while(range.startOffset != 0 && range.toString().indexOf(' ') != 0) {
+                range.setStart(node,(range.startOffset - 1));
+            }
+            if (range.startOffset != 0) {
+                range.setStart(node, range.startOffset + 1);
+            }
+
+            while(range.endOffset < node.length && range.toString().indexOf(' ') == -1 && range.toString().trim() != '') {
+                range.setEnd(node, range.endOffset + 1);
+            }
+            var str = range.toString().trim();
+            wordSelected = str;
+        }
+        // Remove punctuation from string in case that was part of the word
+        wordSelected = wordSelected.replace(/[^A-Za-z0-9_]/g, "");
+        console.log(wordSelected);
+        console.log(segment);
+
+        var activateSegmentationMode = keysPressed[ctrlKeyCode] && keysPressed[altKeyCode];
+        if (wordSelected !== "" && segment !== null) {
+            sendSegEvent(wordSelected, segment, recordContaining(e.target),
+                        activateSegmentationMode);
+        } else {
+            // If word clicked was not whole word, register it as a normal right click
+            return true;
+        }
+        // Just register it as a normal right-click
+        if (!activateSegmentationMode) {
+            return true;
+        }
+        // Don't show context menu if Ctrl + Alt + Right-click is pressed
+        e.preventDefault();
     }
-  }
 }
 
-$('a').hover(
-  function() {
-    var words = this.text.split(" ");
-    function isEmpty(element, index, array) {
-      return element === "";
-    }
-    // If we already hovered over this, don't delete this again
-    if (this.classList.contains('modified') || words.every(isEmpty)) {
-      return;
-    }
-
-    var newText = "";
-    $.each(words, function(j, val) {
-      if (val !== "") {
-        newText = newText + "<span class='smart-seg'>" + val + "</span> ";
-      }
+$(document).ready(function() {
+    $('a').each(function() {
+        if (this.innerHTML !== "") {
+            // Wrap each link so that spans are on the lowest level above text node
+            this.innerHTML = wrapHTMLString(this.innerHTML);
+        }
     });
-
-    var t = $(this);
-    t.addClass('modified');
-    // TODO go down to the TextNode that contains the text, and change HTML there.
-    // Hide all children
-
-    var noChildren = t.children().length == 0;
-    if (noChildren) {
-      this.innerHTML = newText;
-    } else {
-      t.children().css('display', 'none');
-      this.innerHTML += newText;
-    }
-  }, function() {
-    var t = $(this);
-    let contentText = this.text;
-    // Remove all spans created by this process
-    $('span.smart-seg', t).remove();
-
-    var noChildren = t.children().length == 0;
-    if (noChildren) {
-      this.innerHTML = contentText;
-    } else {
-      // Show children again
-      t.children().css('display', 'block');
-    }
-    t.removeClass('modified');
-  }
-);
+});
 
 export { enableRightClickListener };
