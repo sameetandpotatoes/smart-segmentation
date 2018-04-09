@@ -249,7 +249,7 @@ function getTextOnCurrentPage() {
 }
 
 export {
-  copyToClipboard, wrapHTMLString,
+  copyToClipboard, wrapHTMLString, recordContaining,
   getRightClickedTextFromEvent, getSelectedTextFromEvent,
   getRecordTextFromEvent, getTextOnCurrentPage
 };

@@ -1,5 +1,8 @@
 import $ from 'jquery';
-import { wrapHTMLString, getRecordTextFromEvent, getRightClickedTextFromEvent } from './textUtils';
+import {
+    wrapHTMLString, recordContaining,
+    getRecordTextFromEvent,
+    getRightClickedTextFromEvent } from './textUtils';
 
 var keysPressed = {}; // Map of key codes to booleans
 document.onkeydown = document.onkeyup = function(e) {
@@ -37,15 +40,17 @@ function enableRightClickListener(sendSegEvent) {
 
         var activateSegmentationMode = keysPressed[ctrlKeyCode] && keysPressed[altKeyCode];
         if (wordSelected !== "" && segment !== null) {
-            sendSegEvent(wordSelected, segment, activateSegmentationMode);
+            sendSegEvent(wordSelected, segment, recordContaining(e.target),
+                        activateSegmentationMode);
         } else {
-            // If word clicked was not whole word, return early
+            // If word clicked was not whole word, register it as a normal right click
             return true;
         }
         // Just register it as a normal right-click
         if (!activateSegmentationMode) {
             return true;
         }
+        // Don't show context menu if Ctrl + Alt + Right-click is pressed
         e.preventDefault();
     }
 }

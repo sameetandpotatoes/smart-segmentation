@@ -19,20 +19,21 @@ function sendRequestToBackend(subUrl, request, callback) {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
     }
-  }).done(callback);
+}).done(callback);
 }
 
-function getSegmentationInfoFromPage() {
+function sendRequestToContent(payload, callback) {
     // Get the current tab
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         // Query the tab, the response will be the segmentation data
-        chrome.tabs.sendMessage(tabs[0].id, {}, function(response) {
-            // Forward the data to the backend
-            sendRequestToBackend('/segments', response, function(data) {
-                console.log(data);
-                // TODO @rtweeks2 activate segmentation mode
-            });
-        });
+        chrome.tabs.sendMessage(tabs[0].id, payload, callback);
+    });
+}
+
+function getSegmentationInfoFromPage(callback) {
+    sendRequestToContent({requestInfo: true}, function(response) {
+        // Forward the data to the backend
+        sendRequestToBackend('/segments', response, callback);
     });
 }
 
@@ -46,7 +47,10 @@ chrome.runtime.onInstalled.addListener(function() {
     });
 });
 chrome.contextMenus.onClicked.addListener(function(info, tab) {
-    getSegmentationInfoFromPage();
+    getSegmentationInfoFromPage(function(data) {
+        // Forward back to content.js
+        sendRequestToContent(data);
+    });
 });
 
 chrome.runtime.onMessage.addListener(
@@ -60,8 +64,9 @@ chrome.runtime.onMessage.addListener(
                 sendResponse('Sent text to backend!');
             });
         } else if (request.activateSegmentation) {
-            getSegmentationInfoFromPage();
-            sendResponse('Entering segmentation mode!');
+            getSegmentationInfoFromPage(function(data) {
+                sendResponse(data);
+            });
         }
         // Needed because sendResponse (the callback) is used asynchronously
         return true;
