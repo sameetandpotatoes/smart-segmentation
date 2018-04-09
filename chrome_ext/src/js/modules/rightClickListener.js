@@ -1,7 +1,5 @@
 import $ from 'jquery';
-import { wrapHTMLString,
-    getRecordTextFromEvent,
-    getRightClickedTextFromEvent } from './textUtils';
+import { wrapHTMLString, getRecordTextFromEvent, getRightClickedTextFromEvent } from './textUtils';
 
 var keysPressed = {}; // Map of key codes to booleans
 document.onkeydown = document.onkeyup = function(e) {
@@ -26,10 +24,9 @@ function enableRightClickListener(sendSegEvent) {
                 range.setStart(node, range.startOffset + 1);
             }
 
-            do {
-               range.setEnd(node, range.endOffset + 1);
-            } while(range.toString().indexOf(' ') == -1 && range.toString().trim() != '' &&
-                    range.endOffset < node.length);
+            while(range.endOffset < node.length && range.toString().indexOf(' ') == -1 && range.toString().trim() != '') {
+                range.setEnd(node, range.endOffset + 1);
+            }
             var str = range.toString().trim();
             wordSelected = str;
         }
@@ -38,18 +35,18 @@ function enableRightClickListener(sendSegEvent) {
         console.log(wordSelected);
         console.log(segment);
 
-        // If it was not a Ctrl+Alt+RightClick, then return true as normal
         var activateSegmentationMode = keysPressed[ctrlKeyCode] && keysPressed[altKeyCode];
         if (wordSelected !== "" && segment !== null) {
-          sendSegEvent(wordSelected, segment, activateSegmentationMode);
+            sendSegEvent(wordSelected, segment, activateSegmentationMode);
+        } else {
+            // If word clicked was not whole word, return early
+            return true;
         }
-
+        // Just register it as a normal right-click
         if (!activateSegmentationMode) {
-            // Just register it as a normal right-click
             return true;
         }
         e.preventDefault();
-        // TODO figure out how to not highlight user word either.
     }
 }
 
