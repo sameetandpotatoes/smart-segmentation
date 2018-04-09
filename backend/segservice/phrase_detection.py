@@ -12,7 +12,7 @@ def clean_data(raw_page_text):
     # return re.sub(r'\d+', '#', page_no_punct)
     return page_no_punct
 
-def get_phrases_from_sentence(raw_page_text, sentence):
+def get_phrases_from_sentence(raw_page_text, sentence, debug=False):
     reduced_page_text = clean_data(raw_page_text)
     lines = reduced_page_text.split('\n')
     sentence_stream = [line.lower().split() for line in lines]
@@ -21,7 +21,10 @@ def get_phrases_from_sentence(raw_page_text, sentence):
     # Remove non-ascii characters so strings can be printed
     sentence = sentence.encode('utf-8').decode()
     sent = sentence.lower().split()
-    return get_phrases(sentence, sentence_stream, sent)
+    all_phrases = get_phrases(sentence, sentence_stream, sent)
+    if debug:
+        print(all_phrases)
+    return all_phrases
 
 def get_phrases(sentence, sentence_stream, words):
     stop_words = get_stop_words('english')
@@ -51,7 +54,6 @@ def get_phrases(sentence, sentence_stream, words):
             if new_seg is not None and common_delimiter is not new_seg.strip()[0]:
                 all_segmentations.append(new_seg)
     all_segmentations = [s.strip(common_delimiter).strip(string.whitespace) for s in all_segmentations]
-    print(all_segmentations)
     unique_segmentations = list(set(all_segmentations))
 
     # Finally, a segmentation should contain the record text itself.
