@@ -18,11 +18,9 @@ def insert_page_data(data):
     if 'training data' in sqliteDict:
 	    training_data = sqliteDict.get('training data', [])
 	    training_data.append(sentence_stream)
-    print("Storing data...")
     sqliteDict['training data'] = training_data
 
 def get_training_data():
-	print("Retrieving data")
 	if 'training data' not in sqliteDict:
 		print("Invalid query to database")
 		return None
