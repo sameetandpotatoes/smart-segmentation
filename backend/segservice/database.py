@@ -20,5 +20,13 @@ def insert_data(data):
     print("Storing data...")
     mydict['training_data'] = training_data
 
+def get_training_data():
+	print("Retrieving data")
+	if 'training_data' not in mydict:
+		print("Invalid query to database")
+		return None
+	else:
+		x = mydict.get('training_data', [])
+		return x
 
 mydict = SqliteDict('./gensim.sqlite', autocommit=True)

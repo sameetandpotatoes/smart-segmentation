@@ -4,19 +4,11 @@ from collections import Counter
 from gensim.models.phrases import Phraser
 from gensim.models import Phrases
 from stop_words import get_stop_words
-
-def clean_data(raw_page_text):
-    translator = str.maketrans('', '', string.punctuation)
-    page_no_punct = raw_page_text.translate(translator)
-    # TODO regex to replace consecutive numbers with hashtag, but then it should join it with the next word
-    # return re.sub(r'\d+', '#', page_no_punct)
-    return page_no_punct
+from segservice import database
 
 def get_phrases_from_sentence(raw_page_text, sentence, debug=False):
-    reduced_page_text = clean_data(raw_page_text)
-    lines = reduced_page_text.split('\n')
-    sentence_stream = [line.lower().split() for line in lines]
     words = sentence.lower().split()
+    sentence_stream = database.get_training_data()
 
     # Remove non-ascii characters so strings can be printed
     sentence = sentence.encode('utf-8').decode()
