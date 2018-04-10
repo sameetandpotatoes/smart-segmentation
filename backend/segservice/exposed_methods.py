@@ -4,9 +4,12 @@ from flask import request, jsonify
 from segservice import app
 from segservice.phrase_detection import get_phrases_from_sentence
 from segservice.model import get_smart_segmentations
+from segservice import database
 
 @app.method('/frequencies')
 def add_frequencies(req_data):
+    print("Routing to insert")
+    database.insert_data(req_data)
     # TODO unused for now, will be used to store words per domain in mongo
     return 'OK'
 
