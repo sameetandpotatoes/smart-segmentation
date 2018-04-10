@@ -31,7 +31,7 @@ class SegmentRequest:
     @property
     def page_text(self):
         if not hasattr(self, '_page_text'):
-            self._full_line = self._cleaned_req_value('text')
+            self._page_text = self._cleaned_req_value('text')
         return self._page_text
     
     @property
