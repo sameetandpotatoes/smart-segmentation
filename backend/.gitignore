@@ -3,3 +3,4 @@
 /Gemfile.deploy.lock
 /log/capistrano.log
 __pycache__
+*.sqlite
