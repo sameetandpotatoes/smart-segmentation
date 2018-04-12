@@ -53,4 +53,8 @@ enableRightClickListener(handleSegmentation);
 // TODO uncomment when we have a storage model implemented so we can store text and not send it per request
 currentTextOnPage = getTextOnCurrentPage();
 let currentUrl = window.location.href;
-sendPayloadToBackend({cleanedText: currentTextOnPage, currentPage: currentUrl});
+sendPayloadToBackend({cleanedText: currentTextOnPage, currentPage: currentUrl},
+    function(response) {
+        // empty
+    }
+);
