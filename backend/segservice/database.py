@@ -37,7 +37,7 @@ def get_training_data():
 def insert_segmentation_feedback(user_selection, segmentation):
 	# user_selection -> (segmentation, frequency)
 	user_selection = clean_data(user_selection)
-	user_key = user_key_prefix + user_selection
+	user_key = get_user_selection_key(user_selection)
 	if user_key in sqliteDict:
 		frequency_dict = sqliteDict[user_key]
 		if segmentation in frequency_dict:
@@ -50,14 +50,21 @@ def insert_segmentation_feedback(user_selection, segmentation):
 
 	# segmentation -> frequency
 	segmentation = clean_data(segmentation)
-	segmentation_key = segmentation_key_prefix + segmentation
+	segmentation_key = get_segmentation_key(segmentation)
 	frequency = sqliteDict.get(segmentation_key, 0)
 	frequency += 1
 	sqliteDict[segmentation_key] = frequency
 
 def get_segmentation(segmentation, user_selection):
-	segmentation_frequency = sqliteDict.get(segmentation, 0)
-	user_and_segmentation_frequency = sqliteDict.get(user_selection, {segmentation, 0})[segmentation]
+	segmentation_key = get_segmentation_key(segmentation)
+	segmentation_frequency = sqliteDict.get(segmentation_key, 0)
+	user_and_segmentation_frequency = sqliteDict.get(get_user_selection_key(user_selection), {segmentation_key, 0})[segmentation]
 	return (user_and_segmentation_frequency, segmentation_frequency)
+
+def get_segmentation_key(segmentation):
+	return segmentation_key_prefix + segmentation
+
+def get_user_selection_key(user_selection):
+	return user_key_prefix + user_selection
 
 sqliteDict = SqliteDict('./gensim.sqlite', autocommit=True)
