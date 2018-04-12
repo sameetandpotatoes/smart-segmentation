@@ -8,7 +8,7 @@ from segservice import database
 
 @app.method('/frequencies')
 def add_frequencies(req_data):
-    database.insert_page_data(req_data)
+    database.insert_page_data(req_data['cleanedText'])
     return 'OK'
 
 class SegmentRequest:
@@ -30,12 +30,6 @@ class SegmentRequest:
         return self._full_line
     
     @property
-    def page_text(self):
-        if not hasattr(self, '_page_text'):
-            self._page_text = self._cleaned_req_value('text')
-        return self._page_text
-    
-    @property
     def user_selection(self):
         if not hasattr(self, '_user_selection'):
             self._user_selection = self._cleaned_req_value('userSelection')
@@ -43,13 +37,13 @@ class SegmentRequest:
 
 @app.method('/segments')
 def get_segmentations(input: SegmentRequest):
-    segmentations = get_phrases_from_sentence(input.page_text, input.full_line)
+    segmentations = get_phrases_from_sentence(input.full_line)
     selected_phrase = input.user_selection
     smart_segs = get_smart_segmentations(segmentations, selected_phrase, input.full_line)
 
     # currently inserts the first segmentation as the "user selected segmenation"
     # TODO: once we get user selection, update this to send the segmentation to the backend
-    database.insert_segmentation_data(selected_phrase, smart_segs[0]['formatted_phrase'])
+    database.insert_segmentation_feedback(selected_phrase, smart_segs[0]['formatted_phrase'])
 
     return {
         'userSelection': selected_phrase,

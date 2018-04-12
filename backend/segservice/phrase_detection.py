@@ -6,7 +6,7 @@ from gensim.models import Phrases
 from stop_words import get_stop_words
 from segservice import database
 
-def get_phrases_from_sentence(raw_page_text, sentence, debug=False):
+def get_phrases_from_sentence(sentence, debug=False):
     words = sentence.lower().split()
     sentence_stream = database.get_training_data()
 
