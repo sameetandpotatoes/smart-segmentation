@@ -4,15 +4,19 @@ import {
     getRecordTextFromEvent,
     getRightClickedTextFromEvent } from './textUtils';
 
-var keysPressed = {}; // Map of key codes to booleans
-document.onkeydown = document.onkeyup = function(e) {
-    keysPressed[e.keyCode] = e.type == 'keydown';
-}
+let keysPressed = {}; // Map of key codes to booleans
 const ctrlKeyCode = 17;
 const altKeyCode = 18;
 
 function enableRightClickListener(sendSegEvent) {
+    document.onkeydown = document.onkeyup = function(e) {
+        keysPressed[e.keyCode] = e.type == 'keydown';
+    }
     document.oncontextmenu = function(e) {
+        var activateSegmentationMode = keysPressed[ctrlKeyCode] && keysPressed[altKeyCode];
+        keysPressed[ctrlKeyCode] = false;
+        keysPressed[altKeyCode] = false;
+
         let wordSelected = $(e.target).text().trim();
         let segment = getRecordTextFromEvent(e);
 
@@ -38,7 +42,7 @@ function enableRightClickListener(sendSegEvent) {
         console.log(wordSelected);
         console.log(segment);
 
-        var activateSegmentationMode = keysPressed[ctrlKeyCode] && keysPressed[altKeyCode];
+
         if (wordSelected !== "" && segment !== null) {
             sendSegEvent(wordSelected, segment, recordContaining(e.target),
                         activateSegmentationMode);

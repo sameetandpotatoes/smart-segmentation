@@ -8,10 +8,7 @@ let requestedInfo = null;
 let targetDOMElement = null;
 
 function sendPayloadToBackend(payload, callback) {
-    chrome.runtime.sendMessage(payload, function(response) {
-        console.log(response);
-        callback(response);
-    });
+    chrome.runtime.sendMessage(payload, callback);
 }
 
 // Takes a phrase and a segment and sends it to the backend
