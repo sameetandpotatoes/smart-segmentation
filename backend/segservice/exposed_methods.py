@@ -41,10 +41,6 @@ def get_segmentations(input: SegmentRequest):
     selected_phrase = input.user_selection
     smart_segs = get_smart_segmentations(segmentations, selected_phrase, input.full_line)
 
-    # currently inserts the first segmentation as the "user selected segmenation"
-    # TODO: once we get user selection, update this to send the segmentation to the backend
-    database.insert_segmentation_feedback(selected_phrase, smart_segs[0]['formatted_phrase'])
-
     return {
         'userSelection': selected_phrase,
         'recordText': input.full_line,
