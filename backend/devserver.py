@@ -2,6 +2,7 @@
 
 import logging
 from segservice import app
+from segservice import database
 
 logger = logging.getLogger('segservice')
 console_log_printer = logging.StreamHandler()
@@ -15,7 +16,7 @@ else:
         def format(self, record):
             """Override to reset colorization after first line"""
             result = super().format(record)
-            
+
             try:
                 second_line = result.index('\n') + 1
             except ValueError:
@@ -23,9 +24,9 @@ else:
             else:
                 result = result[:second_line] + \
                     colorlog.escape_codes['reset'] + result[second_line:]
-            
+
             return result
-    
+
     log_colors = dict(
         colorlog.default_log_colors,
         DEBUG='cyan',
@@ -52,3 +53,4 @@ logger.setLevel(logging.DEBUG)
 
 logging.getLogger('segservice').debug('Logging "segservice" at DEBUG level...')
 app.run(host='0.0.0.0', debug=True)
+database.init()
