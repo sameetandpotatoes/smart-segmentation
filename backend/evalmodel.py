@@ -3,7 +3,6 @@
 import yaml
 import textwrap
 import os
-import matplotlib.pyplot as plt
 from segservice import database
 from segservice.phrase_detection import get_phrases_from_sentence
 from segservice.model import get_smart_segmentations, only_full_match
