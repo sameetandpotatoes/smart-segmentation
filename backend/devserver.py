@@ -52,5 +52,6 @@ logger.addHandler(console_log_printer)
 logger.setLevel(logging.DEBUG)
 
 logging.getLogger('segservice').debug('Logging "segservice" at DEBUG level...')
-app.run(host='0.0.0.0', debug=True)
 database.init()
+logging.getLogger('segservice').debug('Initialized database')
+app.run(host='0.0.0.0', debug=True)
