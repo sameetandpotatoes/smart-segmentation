@@ -1,6 +1,9 @@
 import $ from 'jquery';
 import { getTextOnCurrentPage } from './modules/textUtils.js';
 import { enableRightClickListener } from './modules/rightClickListener';
+import { startSegmentation, testSegmentation } from './modules/segmentingUI';
+
+document.testSegmentation = testSegmentation;
 
 let currentTextOnPage = null;
 
