@@ -250,6 +250,17 @@ function dismissUI() {
   getMessageBoxJQ().css({visibility: 'hidden'});
 }
 
+/**
+ * Initialize the segmentation UI
+ *
+ * Params:
+ * - targetNode:
+ *      the DOM node targeted by the triggering event
+ * - derivedSegmentations:
+ *      an Array or Strings giving the segmentations to try to represent in the UI
+ * - onselection (optional):
+ *      a callback function that receives any segmentation copied to the clipboard with the UI
+ */
 export function startSegmentation(targetNode, derivedSegmentations, onselection) {
   Object.assign(thisJob, {
     segmentations: derivedSegmentations.slice(),
