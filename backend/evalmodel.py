@@ -4,8 +4,7 @@ import yaml
 import textwrap
 import os
 from segservice import database
-from segservice.phrase_detection import get_phrases_from_sentence
-from segservice.model import get_smart_segmentations, only_full_match
+from segservice.model import SmartSegmenter, only_full_match
 
 # Pretty-print with colors
 GREEN = '\033[92m'
@@ -21,11 +20,12 @@ with open('data/raw_page_data.dat') as file:
 
 os.system("rm -rf {}".format(TEST_NAME))
 database.init(TEST_NAME)
+# TODO: refactor to format data stream, then you don't need a test database
 database.insert_page_data(data_stream)
 products = yaml.load(open('data/test_segs.yaml'))
 all_maps = []
+segmenter = SmartSegmenter(database.get_training_data())
 for product_line in products:
-    segmentations = get_phrases_from_sentence(product_line['phrase'])
     for selected_phrase in product_line['segs']:
         user_selection = selected_phrase['segment']['id']
         answers = selected_phrase['segment']['answers']
@@ -33,9 +33,10 @@ for product_line in products:
         if answers is None:
             answers = []
         answers.append(product_line['phrase'])
-        smart_segs = only_full_match(get_smart_segmentations(segmentations,
-                                                             user_selection,
-                                                             product_line['phrase']))
+        smart_segs = only_full_match(
+            segmenter.get_smart_segmentations(product_line['phrase'],
+                                              user_selection,
+                                              product_line['phrase']))
         assert(len(answers) > 0 and len(smart_segs) > 0)
         num_in_answers = 0
         num_correct = 0
