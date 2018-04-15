@@ -18,7 +18,7 @@ function handleSegmentation(selection, record, targetNode, activateSegmentationM
     }
     // Save the info so that when the backend asks for it, it can provide this
     requestedInfo = {
-        text: currentTextOnPage,
+        pageText: currentTextOnPage,
         userSelection: selection,
         recordText: record
     };

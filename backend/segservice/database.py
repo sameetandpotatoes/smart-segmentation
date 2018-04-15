@@ -20,13 +20,20 @@ def clean_data(text):
     text = text.encode('utf-8').decode()
     return text
 
-def insert_page_data(data):
+def format_data(data):
     reduced_page_text = clean_data(data)
     lines = reduced_page_text.split('\n')
 
-    training_data = sqliteDict.get('training data', [])
+    twod = []
     for line in lines:
-    	training_data.append(line.lower().split())
+    	twod.append(line.lower().split())
+    return twod
+
+def insert_page_data(data):
+    segs = format_data(data)
+    training_data = sqliteDict.get('training data', [])
+    for line in segs:
+        training_data.append(line)
     sqliteDict['training data'] = training_data
 
 def get_training_data():

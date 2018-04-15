@@ -4,6 +4,7 @@ import yaml
 import textwrap
 import os
 from segservice import database
+from segservice.database import format_data
 from segservice.model import SmartSegmenter, only_full_match
 
 # Pretty-print with colors
@@ -24,7 +25,7 @@ database.init(TEST_NAME)
 database.insert_page_data(data_stream)
 products = yaml.load(open('data/test_segs.yaml'))
 all_maps = []
-segmenter = SmartSegmenter(database.get_training_data())
+segmenter = SmartSegmenter(format_data(data_stream))
 for product_line in products:
     for selected_phrase in product_line['segs']:
         user_selection = selected_phrase['segment']['id']
