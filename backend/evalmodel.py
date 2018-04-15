@@ -3,7 +3,6 @@
 import yaml
 import textwrap
 import os
-from segservice import database
 from segservice.database import format_data
 from segservice.model import SmartSegmenter, only_full_match
 
@@ -19,10 +18,6 @@ print_map = True
 with open('data/raw_page_data.dat') as file:
     data_stream = file.read().strip()
 
-os.system("rm -rf {}".format(TEST_NAME))
-database.init(TEST_NAME)
-# TODO: refactor to format data stream, then you don't need a test database
-database.insert_page_data(data_stream)
 products = yaml.load(open('data/test_segs.yaml'))
 all_maps = []
 segmenter = SmartSegmenter(format_data(data_stream))
