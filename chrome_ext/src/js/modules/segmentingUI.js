@@ -240,7 +240,10 @@ function copySelected() {
   // Copy the selected text to the clipboard
   document.execCommand('Copy');
   
-  // TODO: Report segment selection to server
+  // Report segment selection to callback
+  if (thisJob.onselection) {
+    thisJob.onselection(getCurrentSegment());
+  }
 }
 
 function dismissUI() {
