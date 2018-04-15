@@ -73,7 +73,7 @@
         id: 'iPhone 8'
         answers:
             - 'iPhone 8 Plus'
-            - 'iPhone 8 Plus 256 GB'
+            - 'iPhone 8 Plus 256GB'
             - 'Apple - iPhone 8 Plus 256GB'
             - 'Apple - iPhone 8 Plus 256GB - Gold'
 - phrase: 'Apple - iPhone 8 Plus 256GB - Gold (AT&T)'
@@ -82,7 +82,7 @@
         id: 'Plus'
         answers:
             - 'iPhone 8 Plus'
-            - 'iPhone 8 Plus 256 GB'
+            - 'iPhone 8 Plus 256GB'
             - 'Apple - iPhone 8 Plus 256GB'
             - 'Apple - iPhone 8 Plus 256GB - Gold'
     - segment:
