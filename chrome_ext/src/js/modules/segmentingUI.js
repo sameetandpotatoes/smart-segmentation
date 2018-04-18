@@ -297,7 +297,7 @@ class CurrentSegmentSelecter {
           skipElement = false;
           const wUnit = strStartingUnit(this.textSegment.slice(this.curChar));
           if (wUnit.s === ' ') {
-            this.domLocations[this.curChar] = {node: node, index: node.childNodes.length};
+            this.domLocations[this.curChar] = {node: node.forElement, index: node.forElement.childNodes.length};
             this.moveToNextNode();
             this.curChar += wUnit.l;
             this.lastMatchWasSpace = true;
