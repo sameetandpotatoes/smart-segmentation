@@ -8,6 +8,7 @@ logger.setLevel(logging.DEBUG)
 sqliteDict = None
 user_key_prefix = "user "
 segmentation_key_prefix = "seg "
+number_replacement = "####"
 
 def clean_page_data(raw_page_text):
     translator = str.maketrans('', '', string.punctuation)
@@ -21,7 +22,7 @@ def clean_data(text):
     text = text.encode('utf-8').decode()
     nums_list = re.findall(r'\d+', text)
     #removed_floats = re.sub(r'\d+\.\d+', '####', text) # turns floats into #
-    removed_nums = re.sub(r'\d+', '####', text) # turns integers into #
+    removed_nums = re.sub(r'\d+', number_replacement, text) # turns integers into #
     return removed_nums, nums_list
 
 def format_data(data):

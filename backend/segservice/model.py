@@ -4,7 +4,7 @@ from collections import Counter
 from gensim.models.phrases import Phraser
 from gensim.models import Phrases
 from stop_words import get_stop_words
-from segservice.database import clean_data
+from segservice.database import clean_data, number_replacement
 
 class SmartSegmenter:
     def __init__(self, data):
@@ -47,7 +47,7 @@ class SmartSegmenter:
         unique_segmentations.append(sentence.lower())
         return unique_segmentations
 
-    def get_phrases_from_sentence(self, sentence, debug=False):
+    def get_phrases_from_sentence(self, sentence, debug=True):
         words = sentence.lower().split()
 
         # Remove non-ascii characters so strings can be printed
@@ -67,13 +67,44 @@ class SmartSegmenter:
         shift, num_list_index = calculate_shift(nums_list, split_nums, phrase_index)
         phrase_list = phrase.split('####')
         original_phrase = phrase_list[0]
+
+        og_phrase = ""
+        # Match the exact phrase in the rt lower to prevent getting anything before
+        rt_lower_og = record_text.lower()
+        rt_lower = re.sub(r'\d+', number_replacement, record_text.lower())
+        # Add buffer to go back based on how many hashtags were entered
+        num_hashtags_before_phrase = rt_lower[0:rt_lower.index(phrase)].count("#")
+        rt_lower = rt_lower_og[rt_lower.index(phrase) - num_hashtags_before_phrase:]
+        for i, f in enumerate(phrase_list):
+            # Get next element in list if it exists, to determine how many numbers there are
+            s = "" if i + 1 >= len(phrase_list) else phrase_list[i + 1]
+            if f == "":
+                end_idx = rt_lower.index(s)
+                start_idx = end_idx - 1
+                while start_idx > 0 and rt_lower[start_idx].isdigit():
+                    start_idx -= 1
+                start_idx += 1 # add back 1, since it's not a digit
+                og_phrase += rt_lower[start_idx:end_idx]
+            else:
+                start_idx = rt_lower.index(f)
+                end_idx = start_idx + len(f)
+                # Add up to the number
+                og_phrase += rt_lower[start_idx : end_idx]
+                # Find the first part after the number
+                next_idx = rt_lower[end_idx:].index(s)
+                # Add all numbers to the phrase
+                og_phrase += rt_lower[end_idx:end_idx + next_idx]
+        # If there were no numbers in the phrase, og_phrase is empty so reset it
+        og_phrase = phrase if og_phrase == "" else og_phrase
+
+        # TODO alternative approach - decide which is better
         for index,val in enumerate(phrase_list):
             if index is not len(phrase_list)-1:
                 original_phrase += nums_list[num_list_index]
                 num_list_index +=1
                 original_phrase += phrase_list[index+1]
 
-
+        original_phrase = og_phrase
         num_words_in_phrase = len(original_phrase.split(" "))
         phrase_len = len(original_phrase)
 
