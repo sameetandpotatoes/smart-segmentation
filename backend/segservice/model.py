@@ -6,6 +6,7 @@ from gensim.models import Phrases
 from stop_words import get_stop_words
 from segservice.database import clean_data, number_replacement
 
+
 class SmartSegmenter:
     def __init__(self, data):
         self.sentence_stream = data
@@ -13,11 +14,11 @@ class SmartSegmenter:
     def get_phrases(self, sentence, words):
         stop_words = get_stop_words('english')
         bigram = Phrases(self.sentence_stream, min_count=1,
-                        delimiter=b' ', common_terms = stop_words)
+                         delimiter=b' ', common_terms=stop_words)
         trigram = Phrases(bigram[self.sentence_stream], min_count=1,
-                        delimiter=b' ', common_terms = stop_words)
+                          delimiter=b' ', common_terms=stop_words)
         quadgram = Phrases(trigram[self.sentence_stream], min_count=1,
-                        delimiter=b' ', common_terms = stop_words)
+                           delimiter=b' ', common_terms=stop_words)
         all_segmentations = []
 
         bigrams_ = [b for b in bigram[words] if b.count(' ') >= 1]
@@ -35,7 +36,8 @@ class SmartSegmenter:
         if common_delimiter == ' ' and len(frequent_delimiters) == 2:
             common_delimiter, _ = frequent_delimiters[1]
 
-            split_on_delimit = r"(\s+" + re.escape(common_delimiter) + "\s?)|(\s?" + re.escape(common_delimiter) + "\s+)"
+            split_on_delimit = r"(\s+" + re.escape(common_delimiter) + "\s?)|(\s?" + re.escape(
+                common_delimiter) + "\s+)"
 
             for new_seg in set(re.split(split_on_delimit, sentence.lower())):
                 if new_seg is not None and common_delimiter is not new_seg.strip()[0]:
@@ -79,7 +81,7 @@ class SmartSegmenter:
                 while start_idx > 0 and rt_lower[start_idx].isdigit():
                     start_idx -= 1
                 if start_idx is not 0:
-                    start_idx += 1 # add back 1 only if the last one was not a digit
+                    start_idx += 1  # add back 1 only if the last one was not a digit
                 next_part_of_phrase = rt_lower[start_idx:end_idx]
             else:
                 start_idx = rt_lower.index(f)
@@ -100,18 +102,18 @@ class SmartSegmenter:
     def eval_phrase(self, segmentation_result, user_selected, record_text, match_phrases, nonmatch_phrases, nums_list):
         phrase = segmentation_result['phrase']
 
-        # TODO can be removed
+        # Other approach
         cleaned_record_text, _ = clean_data(record_text)
         split_nums = cleaned_record_text.split('####')
         phrase_index = cleaned_record_text.find(phrase)
         shift, num_list_index = calculate_shift(nums_list, split_nums, phrase_index)
         phrase_list = phrase.split('####')
         original_phrase = phrase_list[0]
-        for index,val in enumerate(phrase_list):
-            if index is not len(phrase_list)-1:
+        for index, val in enumerate(phrase_list):
+            if index is not len(phrase_list) - 1:
                 original_phrase += nums_list[num_list_index]
-                num_list_index +=1
-                original_phrase += phrase_list[index+1]
+                num_list_index += 1
+                original_phrase += phrase_list[index + 1]
 
         original_phrase = self.reconstruct_original_phrase(record_text, phrase)
         num_words_in_phrase = len(original_phrase.split(" "))
@@ -121,14 +123,14 @@ class SmartSegmenter:
         phrase_num_signs = cleaned_record_text.lower().find(phrase)
         shift, _ = calculate_shift(nums_list, split_nums, phrase_num_signs)
 
-        if phrase in match_phrases: # full match
+        if phrase in match_phrases:  # full match
             segmentation_result['type'] = 'full_match'
             K = 100.0
-        elif any([partial in original_phrase for partial in user_selected.lower().split(" ")]): # partial match
-            # TODO improve so it's based on how many matches / length of matches, etc.
+        elif any([partial in original_phrase for partial in user_selected.lower().split(" ")]):  # partial match
+            # TODO discuss - should be removed since partial matches are impossible
             segmentation_result['type'] = 'partial_match'
             K = 1.5
-        else: # no match
+        else:  # no match
             K = 0
             segmentation_result['type'] = 'no_match'
             pass
@@ -138,10 +140,10 @@ class SmartSegmenter:
         else:
             score = K + (0.01 * phrase_len) / (num_words_in_phrase ** 1.15)
 
-        # TODO remove
-        andy = record_text[(phrase_num_signs - shift):(phrase_num_signs - shift + phrase_len)]
+        # Calling the other approach
+        approach_two = record_text[(phrase_num_signs - shift):(phrase_num_signs - shift + phrase_len)]
 
-        segmentation_result['formatted_phrase'] = record_text[begin_phrase:begin_phrase+phrase_len]
+        segmentation_result['formatted_phrase'] = record_text[begin_phrase:begin_phrase + phrase_len]
         segmentation_result['score'] = "{:.2f}".format(score)
         return score
 
@@ -165,18 +167,20 @@ class SmartSegmenter:
                                                      match_phrases, nonmatch_phrases, num_list),
                       reverse=True)
 
+
 def only_full_match(segmentations):
     return [s['formatted_phrase'] for s in segmentations if s['type'] == 'full_match']
+
 
 def calculate_shift(nums_list, split_nums, max_index):
     shift = 0
     num_list_index = 0
     num_seen = len(split_nums[0])
-    for i,_ in enumerate(nums_list):
-            if num_seen >= max_index:
-                break
-            num_seen += 4
-            num_seen += len(split_nums[i+1])
-            shift = shift + (4 - len(nums_list[i]))
-            num_list_index +=1
+    for i, _ in enumerate(nums_list):
+        if num_seen >= max_index:
+            break
+        num_seen += 4
+        num_seen += len(split_nums[i + 1])
+        shift = shift + (4 - len(nums_list[i]))
+        num_list_index += 1
     return shift, num_list_index
