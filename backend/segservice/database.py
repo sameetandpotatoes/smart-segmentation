@@ -1,6 +1,10 @@
 from sqlitedict import SqliteDict
+import logging
 import string
 
+logger = logging.getLogger('database')
+logger.setLevel(logging.DEBUG)
+sqliteDict = None
 user_key_prefix = "user "
 segmentation_key_prefix = "seg "
 
@@ -16,14 +20,20 @@ def clean_data(text):
     text = text.encode('utf-8').decode()
     return text
 
-def insert_page_data(data):
+def format_data(data):
     reduced_page_text = clean_data(data)
     lines = reduced_page_text.split('\n')
 
-    training_data = sqliteDict.get('training data', [])
+    twod = []
     for line in lines:
-    	training_data.append(line.lower().split())
-    print(training_data)
+    	twod.append(line.lower().split())
+    return twod
+
+def insert_page_data(data):
+    segs = format_data(data)
+    training_data = sqliteDict.get('training data', [])
+    for line in segs:
+        training_data.append(line)
     sqliteDict['training data'] = training_data
 
 def get_training_data():
@@ -60,4 +70,7 @@ def get_segmentation(segmentation, user_selection):
 	user_and_segmentation_frequency = sqliteDict.get(user_selection, {segmentation, 0})[segmentation]
 	return (user_and_segmentation_frequency, segmentation_frequency)
 
-sqliteDict = SqliteDict('./gensim.sqlite', autocommit=True)
+def init(filename='./gensim.sqlite'):
+    global sqliteDict
+    sqliteDict = SqliteDict(filename, autocommit=True)
+    logger.debug("Created database at {}".format(filename))

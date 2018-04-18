@@ -4,15 +4,19 @@ import {
     getRecordTextFromEvent,
     getRightClickedTextFromEvent } from './textUtils';
 
-var keysPressed = {}; // Map of key codes to booleans
-document.onkeydown = document.onkeyup = function(e) {
-    keysPressed[e.keyCode] = e.type == 'keydown';
-}
+let keysPressed = {}; // Map of key codes to booleans
 const ctrlKeyCode = 17;
 const altKeyCode = 18;
 
-function enableRightClickListener(sendSegEvent) {
+function enableRightClickListener(saveSegmentationQuery) {
+    document.onkeydown = document.onkeyup = function(e) {
+        keysPressed[e.keyCode] = e.type == 'keydown';
+    }
     document.oncontextmenu = function(e) {
+        var activateSegmentationMode = keysPressed[ctrlKeyCode] && keysPressed[altKeyCode];
+        keysPressed[ctrlKeyCode] = false;
+        keysPressed[altKeyCode] = false;
+
         let wordSelected = $(e.target).text().trim();
         let segment = getRecordTextFromEvent(e);
 
@@ -35,22 +39,18 @@ function enableRightClickListener(sendSegEvent) {
         }
         // Remove punctuation from string in case that was part of the word
         wordSelected = wordSelected.replace(/[^A-Za-z0-9_]/g, "");
-        console.log(wordSelected);
-        console.log(segment);
 
-        var activateSegmentationMode = keysPressed[ctrlKeyCode] && keysPressed[altKeyCode];
-        if (wordSelected !== "" && segment !== null) {
-            sendSegEvent(wordSelected, segment, recordContaining(e.target),
-                        activateSegmentationMode);
-        } else {
-            // If word clicked was not whole word, register it as a normal right click
+        let selectedWord = wordSelected !== "" && segment !== null;
+
+        if (selectedWord) {
+            saveSegmentationQuery(wordSelected, segment, e.target, activateSegmentationMode);
+        }
+
+        if (!activateSegmentationMode || !selectedWord) {
+            // Just register it as a normal right-click
             return true;
         }
-        // Just register it as a normal right-click
-        if (!activateSegmentationMode) {
-            return true;
-        }
-        // Don't show context menu if Ctrl + Alt + Right-click is pressed
+        // We selected a word and pressed the right keys, so don't show context menu;
         e.preventDefault();
     }
 }
