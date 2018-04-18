@@ -4,6 +4,7 @@ from collections import Counter
 from gensim.models.phrases import Phraser
 from gensim.models import Phrases
 from stop_words import get_stop_words
+from segservice.database import clean_data
 
 class SmartSegmenter:
     def __init__(self, data):
@@ -27,7 +28,7 @@ class SmartSegmenter:
         all_segmentations.extend(quadgrams_)
 
         # Split on the most common punctuation in the record too
-        delimiters = re.findall(r'\W', sentence)
+        delimiters = re.findall(r'[^\w#]', sentence)
         frequent_delimiters = Counter(delimiters).most_common(2)
         common_delimiter, _ = frequent_delimiters[0]
         # We don't want space if there's something else, but if there's nothing else then split on spaces
@@ -50,22 +51,40 @@ class SmartSegmenter:
         words = sentence.lower().split()
 
         # Remove non-ascii characters so strings can be printed
-        sentence = sentence.encode('utf-8').decode()
+        #sentence = sentence.encode('utf-8').decode()
+        sentence, num_list = clean_data(sentence)
         sent = sentence.lower().split()
         all_phrases = self.get_phrases(sentence, sent)
         if debug:
             print(all_phrases)
-        return all_phrases
+        return all_phrases, num_list
 
-    def eval_phrase(self, segmentation_result, user_selected, record_text, match_phrases, nonmatch_phrases):
+    def eval_phrase(self, segmentation_result, user_selected, record_text, match_phrases, nonmatch_phrases, nums_list):
         phrase = segmentation_result['phrase']
-        num_words_in_phrase = len(phrase.split(" "))
-        phrase_len = len(phrase)
+        cleaned_record_text, _ = clean_data(record_text)
+        split_nums = cleaned_record_text.split('####')
+        phrase_index = cleaned_record_text.find(phrase)
+        shift, num_list_index = calculate_shift(nums_list, split_nums, phrase_index)
+        phrase_list = phrase.split('####')
+        original_phrase = phrase_list[0]
+        for index,val in enumerate(phrase_list):
+            if index is not len(phrase_list)-1:
+                original_phrase += nums_list[num_list_index]
+                num_list_index +=1
+                original_phrase += phrase_list[index+1]
+
+
+        num_words_in_phrase = len(original_phrase.split(" "))
+        phrase_len = len(original_phrase)
+
+        begin_phrase = record_text.lower().find(phrase)
+        phrase_num_signs = cleaned_record_text.lower().find(phrase)
+        shift, _ = calculate_shift(nums_list, split_nums, phrase_num_signs)
 
         if phrase in match_phrases: # full match
             segmentation_result['type'] = 'full_match'
             K = 100.0
-        elif any([partial in phrase for partial in user_selected.lower().split(" ")]): # partial match
+        elif any([partial in original_phrase for partial in user_selected.lower().split(" ")]): # partial match
             # TODO improve so it's based on how many matches / length of matches, etc.
             segmentation_result['type'] = 'partial_match'
             K = 1.5
@@ -74,20 +93,21 @@ class SmartSegmenter:
             segmentation_result['type'] = 'no_match'
             pass
 
-        if record_text.lower() == phrase:
+        if record_text.lower() == original_phrase:
             score = K
         else:
             score = K + (0.01 * phrase_len) / (num_words_in_phrase ** 1.15)
 
-        begin_phrase = record_text.lower().find(phrase)
-        segmentation_result['formatted_phrase'] = record_text[begin_phrase:begin_phrase + phrase_len]
+
+        segmentation_result['formatted_phrase'] = record_text[(phrase_num_signs - shift):(phrase_num_signs - shift + phrase_len)]
         segmentation_result['score'] = "{:.2f}".format(score)
         return score
 
     def get_smart_segmentations(self, sentence, user_selected, full_line):
-        segmentations = self.get_phrases_from_sentence(sentence)
+        segmentations, num_list = self.get_phrases_from_sentence(sentence)
         # segmentations are all in lowercase we need to lowercase the
         # user_selected phrase too
+        user_selected, _ = clean_data(user_selected)
         lower_selected_phrase = user_selected.lower()
         match_phrases = [p for p in segmentations if lower_selected_phrase in p]
         nonmatch_phrases = [p for p in segmentations if lower_selected_phrase not in p]
@@ -100,8 +120,21 @@ class SmartSegmenter:
             })
         return sorted(ordered_segs,
                       key=lambda x: self.eval_phrase(x, user_selected, full_line,
-                                                     match_phrases, nonmatch_phrases),
+                                                     match_phrases, nonmatch_phrases, num_list),
                       reverse=True)
 
 def only_full_match(segmentations):
     return [s['formatted_phrase'] for s in segmentations if s['type'] == 'full_match']
+
+def calculate_shift(nums_list, split_nums, max_index):
+    shift = 0
+    num_list_index = 0
+    num_seen = len(split_nums[0])
+    for i,_ in enumerate(nums_list):
+            if num_seen >= max_index:
+                break
+            num_seen += 4
+            num_seen += len(split_nums[i+1])
+            shift = shift + (4 - len(nums_list[i]))
+            num_list_index +=1
+    return shift, num_list_index
