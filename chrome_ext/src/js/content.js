@@ -29,28 +29,20 @@ function handleSegmentation(selection, record, targetNode, activateSegmentationM
     if (activateSegmentationMode) {
         // Tell background to initiate segmentation mode
         sendPayloadToBackend({activateSegmentation: true}, function(response) {
-            console.log(targetDOMElement);
-            console.log(response);
-            let strs = [];
-            for (var i = 0; i < response.segmentations.global.length; i++) {
-                strs.push(response.segmentations.global[i].phrase);
-            }
+            let strs = response.segmentations.global.map(x => x.formatted_phrase);
+            console.log(strs);
             startSegmentation(targetDOMElement, strs);
         });
     }
 }
 
 chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse) {
-        if (request.requestInfo) {
+    function(backend, sender, sendResponse) {
+        if (backend.requestInfo) {
             sendResponse(requestedInfo);
-        } else if (request.segmentations) {
-            console.log(targetDOMElement);
-            console.log(request);
-            let strs = [];
-            for (var i = 0; i < request.segmentations.global.length; i++) {
-                strs.push(request.segmentations.global[i].phrase);
-            }
+        } else if (backend.segmentations) {
+            console.log(backend);
+            let strs = backend.segmentations.global.map(x => x.formatted_phrase);
             console.log(strs);
             startSegmentation(targetDOMElement, strs);
         }
