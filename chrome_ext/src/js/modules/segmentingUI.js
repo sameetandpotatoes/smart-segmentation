@@ -108,21 +108,70 @@ function selectSegment(which) {
 
 const leadingWhitePattern = /^\s+/m;
 
+function strStartingUnit(str) {
+  var lw = leadingWhitePattern.exec(str);
+  if (lw) {
+    return {s: ' ', l: lw.length}
+  } else {
+    return {s: str[0], l: 1}
+  }
+}
+
+function kmpFailure(str) {
+  var failureTable = Array(str.length).fill(-1);
+  var i = 1, candidate = 0;
+  
+  while (i < str.length) {
+    var iUnit = strStartingUnit(str.slice(i)), cUnit = strStartingUnit(str.slice(candidate));
+    
+    if (iUnit.s === cUnit.s) {
+      failureTable[i] = failureTable[candidate];
+      i += iUnit.l;
+      candidate += cUnit.l;
+    } else {
+      failureTable[i] = candidate;
+      candidate = failureTable[candidate];
+      cUnit = strStartingUnit(str.slice(candidate));
+      while (candidate >= 0 && iUnit.s != cUnit.s) {
+        candidate = failureTable[candidate];
+        cUnit = strStartingUnit(str.slice(candidate));
+      }
+      i += iUnit.l;
+      candidate += cUnit.l;
+    }
+  }
+  
+  failureTable[i] = candidate;
+  
+  return failureTable;
+}
+
+function elementIsVisible(elt) {
+  const eltStyle = getComputedStyle(elt);
+  switch (eltStyle.display) {
+    case 'none':
+    case 'table-column-group':
+    case 'table-column':
+      return false;
+  }
+  if (eltStyle.visibility != 'visible') {
+    return false;
+  }
+  return true;
+}
+
 class CurrentSegmentSelecter {
   constructor() {
-    this.textSegment = getCurrentSegment();
+    // Normalize spaces in this value so we can count align this.domLocations more easily on failure
+    this.textSegment = getCurrentSegment().replace(/\s+/m, ' ');
     this.selRange = document.createRange();
     this.position = {node: thisJob.recordNode, index: 0};
     this.nodeStack = [];
     this.curChar = 0;
-    this.backtrackTo = {};
-  }
-  
-  backtrack() {
-    this.position.node = this.backtrackTo.node;
-    this.position.index = this.backtrackTo.index;
-    this.nodeStack = this.backtrackTo.nodeStack;
-    this.curChar = 0;
+    this.lastMatchWasSpace = false;
+    
+    this.failureTable = kmpFailure(this.textSegment);
+    this.domLocations = Array(this.textSegment.length);
   }
   
   popFromNodeStack() {
@@ -134,64 +183,144 @@ class CurrentSegmentSelecter {
   
   moveToNextNode() {
     this.position.index = 0;
+    delete this.position.elementalContent;
     this.popFromNodeStack();
   }
   
   canSearch() {
-    return this.position.node != null && this.curChar < this.textSegment.length;
+    return this.position.node && this.curChar < this.textSegment.length;
   }
   
   searchStep() {
     const {node, index} = this.position;
+    var skipElement = true;
     switch (node.nodeType) {
       case node.TEXT_NODE:
         if (node.nodeValue.length <= index) {
           // Move to next node
           this.moveToNextNode();
-        } else if (this.curChar === 0) {
-          // Look for the first character in this node's text
-          let firstCharPos = node.nodeValue.indexOf(this.textSegment[0]);
-          if (firstCharPos >= 0) {
-            this.selRange.setStart(node, firstCharPos);
-            this.position.index = firstCharPos + 1;
-            ++this.curChar;
-            Object.assign(this.backtrackTo, this.position, {nodeStack: this.nodeStack.slice()});
-          } else {
-            // Move to next node
-            this.popFromNodeStack();
-          }
-        } else if (leadingWhitePattern.test(this.textSegment.slice(this.curChar))) {
-          // When segment indicates space, match any non-empty amount of whitespace
-          let leadingWhite = leadingWhitePattern.exec(node.nodeValue.slice(index));
-          if (leadingWhite) {
-            this.position.index += leadingWhite[0].length;
-            this.curChar += leadingWhitePattern.exec(this.textSegment.slice(this.curChar))[0].length;
-          } else {
-            this.backtrack();
-          }
-        } else if (this.textSegment[this.curChar] === node.nodeValue[index]) {
-          // Match the exact character
-          ++this.position.index;
-          ++this.curChar;
+        } else if (index === 0 && this.lastMatchWasSpace && leadingWhitePattern.test(node.nodeValue)) {
+          // Consume leading space as part of trailing space of last match
+          this.position.index = leadingWhitePattern.exec(node.nodeValue).length;
         } else {
-          this.backtrack();
+          this.lastMatchWasSpace = false;
+          const wUnit = strStartingUnit(this.textSegment.slice(this.curChar)),
+            sUnit = strStartingUnit(node.nodeValue.slice(index));
+          if (wUnit.s === sUnit.s) {
+            this.domLocations[this.curChar] = Object.assign({}, this.position);
+            this.position.index += sUnit.l;
+            this.curChar += wUnit.l;
+            this.lastMatchWasSpace = wUnit.s === ' ';
+          } else {
+            this.matchFailed(() => {this.position.index += sUnit.l;});
+          }
         }
         break;
       
       case node.ELEMENT_NODE:
-        if (node.childNodes[1]) {
-          this.nodeStack.push(node.childNodes[1]);
+        if (node.tagName == 'BR') {
+          if (!this.lastMatchWasSpace) {
+            // Match BR against whitespace
+            skipElement = false;
+            const wUnit = strStartingUnit(this.textSegment.slice(this.curChar));
+            if (wUnit.s === ' ') {
+              this.domLocations[this.curChar] = {node: node, index: node.childNodes.length};
+              this.moveToNextNode();
+              this.curChar += wUnit.l;
+              this.lastMatchWasSpace = true;
+            } else {
+              this.matchFailed(() => {this.moveToNextNode();});
+            }
+          }
+        } else if (this.position.elementalContent) {
+          if (this.position.elementalContent.length <= this.position.index) {
+            // Continue with skipping this element -- search has progressed
+          } else if (this.position.index === 0 && this.lastMatchWasSpace) {
+            // Consume this as part of trailing space of last match
+            this.position.index = 1;
+            skipElement = false;
+          } else {
+            skipElement = false;
+            this.lastMatchWasSpace = false;
+            const wUnit = strStartingUnit(this.textSegment.slice(this.curChar)),
+              sUnit = strStartingUnit(this.position.elementalContent.slice(this.position.index));
+            if (wUnit.s === sUnit.s) {
+              this.domLocations[this.curChar] = {node: this.position.node, index: 0};
+              this.position.index += sUnit.l;
+              this.curChar += wUnit.l;
+              this.lastMatchWasSpace = wUnit.s === ' ';
+            } else {
+              this.matchFailed(() => {this.position.index += sUnit.l;});
+            }
+          }
+        } else if (elementIsVisible(node)) {
+          const ariaLabel = node.attributes['aria-label'];
+          if (ariaLabel) {
+            this.position.elementalContent = ' ' + ariaLabel + ' ';
+            skipElement = false;
+          } else {
+            const eltStyle = getComputedStyle(node);
+            if (eltStyle.display != 'inline') {
+              if (this.lastMatchWasSpace) {
+                // We can fold the space represented by the "blockness" of this element into that, so allow "skipping" this element
+              } else {
+                // We need to consume whitespace from this.textSegment or fail the match AND...
+                skipElement = false;
+                this.position.elementalContent = ' ';
+                
+                // Arrange that, when this node is "exited", we consume whitespace from this.textSegment _again_ (unless this.lastMatchWasSpace at that point)
+                this.nodeStack.push({nodeType: 'blockExit', forElement: node});
+              }
+            }
+          }
         }
-        if (node.childNodes[0]) {
-          this.position.node = node.childNodes[0];
+        if (skipElement) {
+          if (node.childNodes[1]) {
+            this.nodeStack.push(node.childNodes[1]);
+          }
+          if (node.childNodes[0]) {
+            this.position.node = node.childNodes[0];
+            delete this.position.elementalContent;
+            this.position.index = 0;
+          } else {
+            this.moveToNextNode();
+          }
+        }
+        break;
+      
+      case 'blockExit':
+        // Special case for possibly consuming whitespace when exiting block node
+        if (this.lastMatchWasSpace) {
+          this.moveToNextNode();
         } else {
-          this.popFromNodeStack();
+          // Match leaving block element against whitespace
+          skipElement = false;
+          const wUnit = strStartingUnit(this.textSegment.slice(this.curChar));
+          if (wUnit.s === ' ') {
+            this.domLocations[this.curChar] = {node: node, index: node.childNodes.length};
+            this.moveToNextNode();
+            this.curChar += wUnit.l;
+            this.lastMatchWasSpace = true;
+          } else {
+            this.matchFailed(() => {this.moveToNextNode();});
+          }
         }
         break;
       
       default:
-        this.popFromNodeStack();
+        this.moveToNextNode();
         break;
+    }
+  }
+  
+  matchFailed(onSkipThis) {
+    const failTo = this.failureTable[this.curChar];
+    this.domLocations.splice(0, failTo,
+      ...this.domLocations.slice(this.curChar - failTo, this.curChar));
+    this.curChar = failTo;
+    if (this.curChar < 0) {
+      this.curChar = 0;
+      onSkipThis(); 
     }
   }
   
@@ -200,7 +329,17 @@ class CurrentSegmentSelecter {
       return false;
     }
     
-    this.selRange.setEnd(this.position.node, this.position.index);
+    this.selRange.setStart(this.domLocations[0].node, this.domLocations[0].index);
+    const {node} = this.position;
+    switch (node.nodeType) {
+      case node.TEXT_NODE:
+        this.selRange.setEnd(node, this.position.index);
+        break;
+      
+      case node.ELEMENT_NODE:
+        this.selRange.setEnd(node, node.childNodes.length);
+        break;
+    }
     const docsel = document.getSelection();
     docsel.removeAllRanges();
     docsel.addRange(this.selRange);
