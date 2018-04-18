@@ -5,7 +5,7 @@ import { startSegmentation, testSegmentation } from './modules/segmentingUI';
 
 document.testSegmentation = testSegmentation;
 
-let currentTextOnPage = null;
+let currentTextOnPage = getTextOnCurrentPage();
 
 let requestedInfo = null;
 let targetDOMElement = null;
@@ -31,7 +31,11 @@ function handleSegmentation(selection, record, targetNode, activateSegmentationM
         sendPayloadToBackend({activateSegmentation: true}, function(response) {
             console.log(targetDOMElement);
             console.log(response);
-            // TODO @rtweeks2 start segmentation mode
+            let strs = [];
+            for (var i = 0; i < response.segmentations.global.length; i++) {
+                strs.push(response.segmentations.global[i].phrase);
+            }
+            startSegmentation(targetDOMElement, strs);
         });
     }
 }
@@ -43,18 +47,22 @@ chrome.runtime.onMessage.addListener(
         } else if (request.segmentations) {
             console.log(targetDOMElement);
             console.log(request);
-            // TODO @rtweeks2 start segmentation mode
+            let strs = [];
+            for (var i = 0; i < request.segmentations.global.length; i++) {
+                strs.push(request.segmentations.global[i].phrase);
+            }
+            console.log(strs);
+            startSegmentation(targetDOMElement, strs);
         }
     }
 );
 
 enableRightClickListener(handleSegmentation);
 
-// TODO uncomment when we have a storage model implemented so we can store text and not send it per request
-currentTextOnPage = getTextOnCurrentPage();
 let currentUrl = window.location.href;
 sendPayloadToBackend({cleanedText: currentTextOnPage, currentPage: currentUrl},
     function(response) {
         // empty
+        console.log("Sent text to backend!");
     }
 );
