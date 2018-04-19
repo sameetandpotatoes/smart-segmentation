@@ -5,6 +5,7 @@ from gensim.models.phrases import Phraser
 from gensim.models import Phrases
 from stop_words import get_stop_words
 from segservice.database import clean_data, number_replacement, clean_data_no_nums
+import IPython
 
 
 class SmartSegmenter:
@@ -49,18 +50,16 @@ class SmartSegmenter:
         unique_segmentations.append(sentence.lower())
         return unique_segmentations
 
-    def get_phrases_from_sentence(self, sentence, debug=True):
+    def get_phrases_from_sentence(self, sentence):
         words = sentence.lower().split()
 
         sentence = clean_data(sentence)
         sent = sentence.lower().split()
         all_phrases = self.get_phrases(sentence, sent)
-        if debug:
-            print(all_phrases)
         return all_phrases
 
     def reconstruct_original_phrase(self, record_text, phrase):
-        phrase_list = phrase.split('####')
+        phrase_list = phrase.split(number_replacement)
         og_phrase = ""
         # Match the exact phrase in the rt lower to prevent getting anything before
         rt_lower_og = record_text.lower()
@@ -80,100 +79,59 @@ class SmartSegmenter:
                 start_idx = end_idx - 1
                 while start_idx > 0 and rt_lower[start_idx].isdigit():
                     start_idx -= 1
-                if start_idx is not 0:
-                    start_idx += 1  # add back 1 only if the last one was not a digit
+                if start_idx is not 0: # Add back 1 only if the last one was not a digit
+                    start_idx += 1
+                if end_idx is 0:
+                    while end_idx < len(rt_lower) and rt_lower[end_idx].isdigit():
+                        end_idx += 1
+                    # Don't add back 1 since substring is non-inclusive at the end
                 next_part_of_phrase = rt_lower[start_idx:end_idx]
             else:
                 start_idx = rt_lower.index(f)
                 end_idx = start_idx + len(f)
                 # Copy string over up to the number
-                next_part_of_phrase = rt_lower[start_idx: end_idx]
+                next_part_of_phrase = rt_lower[start_idx:end_idx]
                 # Find the first part of second string after the number
                 next_idx = rt_lower[end_idx:].index(s)
                 # Add all numbers to the phrase
-                next_part_of_phrase += rt_lower[end_idx:end_idx + next_idx]
+                next_part_of_phrase += rt_lower[end_idx:end_idx+next_idx]
             idx += len(next_part_of_phrase)
             og_phrase += next_part_of_phrase
             # reset rt_lower to after the string
             rt_lower = rt_lower[rt_lower.find(next_part_of_phrase) + len(next_part_of_phrase):]
-        # If there were no numbers in the phrase, og_phrase is empty so reset it
-        return phrase if og_phrase == "" else og_phrase.strip()
+        return og_phrase.strip()
 
-    def eval_phrase(self, segmentation_result, user_selected, record_text, match_phrases, nonmatch_phrases):
+    def eval_phrase(self, segmentation_result, user_selected, record_text):
         phrase = segmentation_result['phrase']
-
         original_phrase = self.reconstruct_original_phrase(record_text, phrase)
         num_words_in_phrase = len(original_phrase.split(" "))
         phrase_len = len(original_phrase)
         begin_phrase = record_text.lower().find(original_phrase)
 
-        print("0: " + phrase)
-        print("1: " + original_phrase)
-        print("2: " + user_selected.lower())
-        if original_phrase == user_selected.lower():
-            print("Found them")
-            segmentation_result['type'] = 'full_match'
-            K = 200.0
-        elif phrase in match_phrases:  # full match
-            segmentation_result['type'] = 'full_match'
-            K = 100.0
-        else:  # no match
-            K = 0
-            segmentation_result['type'] = 'no_match'
-            pass
+        K = 100
         if record_text.lower() == original_phrase:
             score = K
+        elif original_phrase == user_selected.lower():
+            score = float("inf")
         else:
             score = K + (0.01 * phrase_len) / (num_words_in_phrase ** 1.15)
 
+        # Add in the formatted phrase to the dict
         segmentation_result['formatted_phrase'] = record_text[begin_phrase:begin_phrase + phrase_len]
-        segmentation_result['score'] = "{:.2f}".format(score)
+        # Round score to 4 decimal places
+        segmentation_result['score'] = "{:.4f}".format(score)
         return score
 
     def get_smart_segmentations(self, sentence, user_selected, full_line):
         segmentations = self.get_phrases_from_sentence(sentence)
-        # segmentations are all in lowercase we need to lowercase the
-        # user_selected phrase too
-        user_selected = clean_data_no_nums(user_selected)
-        lower_selected_phrase = user_selected.lower()
-        match_phrases = [p for p in segmentations if lower_selected_phrase in p]
-        nonmatch_phrases = [p for p in segmentations if lower_selected_phrase not in p]
-
+        # What the word selected is the "best" segmentation, always
+        user_selected_seg = clean_data(user_selected).lower()
+        segmentations.append(user_selected_seg)
         ordered_segs = []
         for phrase in segmentations:
             ordered_segs.append({
                 'phrase': phrase,
                 'score': 0
             })
-            sentence = clean_data(sentence)
-            sent = sentence.lower().split()
-        modified_user_selection = clean_data(user_selected)
-        modified_user_selection = modified_user_selection.lower()
-        if not any(user_selected == x['phrase'] for x in ordered_segs):
-            print("ADDING IN THE USER SELECTION: " + modified_user_selection)
-            ordered_segs.append({
-                'phrase': modified_user_selection,
-                'score': 0})
-        return sorted(ordered_segs,
-                      key=lambda x: self.eval_phrase(x, user_selected, full_line,
-                                                     match_phrases, nonmatch_phrases),
-                      reverse=True)
-
-
-
-def only_full_match(segmentations):
-    return [s['formatted_phrase'] for s in segmentations if s['type'] == 'full_match']
-
-
-def calculate_shift(nums_list, split_nums, max_index):
-    shift = 0
-    num_list_index = 0
-    num_seen = len(split_nums[0])
-    for i, _ in enumerate(nums_list):
-        if num_seen >= max_index:
-            break
-        num_seen += 4
-        num_seen += len(split_nums[i + 1])
-        shift = shift + (4 - len(nums_list[i]))
-        num_list_index += 1
-    return shift, num_list_index
+        ordered_segs = sorted(ordered_segs, key=lambda x: self.eval_phrase(x, user_selected, full_line), reverse=True)
+        return [s for s in ordered_segs if user_selected in s['formatted_phrase']]
