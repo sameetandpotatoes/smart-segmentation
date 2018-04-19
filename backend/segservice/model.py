@@ -52,12 +52,12 @@ class SmartSegmenter:
     def get_phrases_from_sentence(self, sentence, debug=True):
         words = sentence.lower().split()
 
-        sentence, num_list = clean_data(sentence)
+        sentence = clean_data(sentence)
         sent = sentence.lower().split()
         all_phrases = self.get_phrases(sentence, sent)
         if debug:
             print(all_phrases)
-        return all_phrases, num_list
+        return all_phrases
 
     def reconstruct_original_phrase(self, record_text, phrase):
         phrase_list = phrase.split('####')
@@ -99,37 +99,17 @@ class SmartSegmenter:
         # If there were no numbers in the phrase, og_phrase is empty so reset it
         return phrase if og_phrase == "" else og_phrase.strip()
 
-    def eval_phrase(self, segmentation_result, user_selected, record_text, match_phrases, nonmatch_phrases, nums_list):
+    def eval_phrase(self, segmentation_result, user_selected, record_text, match_phrases, nonmatch_phrases):
         phrase = segmentation_result['phrase']
-
-        # Other approach
-        cleaned_record_text, _ = clean_data(record_text)
-        split_nums = cleaned_record_text.split('####')
-        phrase_index = cleaned_record_text.find(phrase)
-        shift, num_list_index = calculate_shift(nums_list, split_nums, phrase_index)
-        phrase_list = phrase.split('####')
-        original_phrase = phrase_list[0]
-        for index, val in enumerate(phrase_list):
-            if index is not len(phrase_list) - 1:
-                original_phrase += nums_list[num_list_index]
-                num_list_index += 1
-                original_phrase += phrase_list[index + 1]
 
         original_phrase = self.reconstruct_original_phrase(record_text, phrase)
         num_words_in_phrase = len(original_phrase.split(" "))
         phrase_len = len(original_phrase)
-
         begin_phrase = record_text.lower().find(original_phrase)
-        phrase_num_signs = cleaned_record_text.lower().find(phrase)
-        shift, _ = calculate_shift(nums_list, split_nums, phrase_num_signs)
 
         if phrase in match_phrases:  # full match
             segmentation_result['type'] = 'full_match'
             K = 100.0
-        elif any([partial in original_phrase for partial in user_selected.lower().split(" ")]):  # partial match
-            # TODO discuss - should be removed since partial matches are impossible
-            segmentation_result['type'] = 'partial_match'
-            K = 1.5
         else:  # no match
             K = 0
             segmentation_result['type'] = 'no_match'
@@ -140,18 +120,15 @@ class SmartSegmenter:
         else:
             score = K + (0.01 * phrase_len) / (num_words_in_phrase ** 1.15)
 
-        # Calling the other approach
-        approach_two = record_text[(phrase_num_signs - shift):(phrase_num_signs - shift + phrase_len)]
-
         segmentation_result['formatted_phrase'] = record_text[begin_phrase:begin_phrase + phrase_len]
         segmentation_result['score'] = "{:.2f}".format(score)
         return score
 
     def get_smart_segmentations(self, sentence, user_selected, full_line):
-        segmentations, num_list = self.get_phrases_from_sentence(sentence)
+        segmentations = self.get_phrases_from_sentence(sentence)
         # segmentations are all in lowercase we need to lowercase the
         # user_selected phrase too
-        user_selected, _ = clean_data(user_selected)
+        user_selected = clean_data(user_selected)
         lower_selected_phrase = user_selected.lower()
         match_phrases = [p for p in segmentations if lower_selected_phrase in p]
         nonmatch_phrases = [p for p in segmentations if lower_selected_phrase not in p]
@@ -164,7 +141,7 @@ class SmartSegmenter:
             })
         return sorted(ordered_segs,
                       key=lambda x: self.eval_phrase(x, user_selected, full_line,
-                                                     match_phrases, nonmatch_phrases, num_list),
+                                                     match_phrases, nonmatch_phrases),
                       reverse=True)
 
 

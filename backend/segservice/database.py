@@ -14,21 +14,20 @@ number_replacement = "####"
 def clean_page_data(raw_page_text):
     translator = str.maketrans('', '', string.punctuation)
     page_no_punct = raw_page_text.translate(translator)
-    cleaned_data, _ = clean_data(page_no_punct)
+    cleaned_data = clean_data(page_no_punct)
     return cleaned_data
 
 
 def clean_data(text):
     # TODO: Doubles?
     text = text.encode('utf-8').decode()
-    nums_list = re.findall(r'\d+', text)
     # removed_floats = re.sub(r'\d+\.\d+', '####', text) # turns floats into #
     removed_nums = re.sub(r'\d+', number_replacement, text)  # turns integers into #
-    return removed_nums, nums_list
+    return removed_nums
 
 
 def format_data(data):
-    reduced_page_text, _ = clean_data(data)
+    reduced_page_text = clean_data(data)
     lines = reduced_page_text.split('\n')
 
     formatted_data = []
@@ -56,7 +55,7 @@ def get_training_data():
 
 def insert_segmentation_feedback(user_selection, segmentation):
     # user_selection -> (segmentation, frequency)
-    user_selection, _ = clean_data(user_selection)
+    user_selection = clean_data(user_selection)
     user_key = get_user_selection_key(user_selection)
     if user_key in sqliteDict:
         frequency_dict = sqliteDict[user_key]
@@ -69,7 +68,7 @@ def insert_segmentation_feedback(user_selection, segmentation):
         sqliteDict[user_key] = {segmentation: 1}
 
     # segmentation -> frequency
-    segmentation, _ = clean_data(segmentation)
+    segmentation = clean_data(segmentation)
     segmentation_key = get_segmentation_key(segmentation)
     frequency = sqliteDict.get(segmentation_key, 0)
     frequency += 1
