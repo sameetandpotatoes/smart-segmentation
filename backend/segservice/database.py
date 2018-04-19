@@ -26,6 +26,10 @@ def clean_data(text):
     return removed_nums
 
 
+def clean_data_no_nums(text):
+    return text.encode('utf-8').decode()
+
+
 def format_data(data):
     reduced_page_text = clean_data(data)
     lines = reduced_page_text.split('\n')

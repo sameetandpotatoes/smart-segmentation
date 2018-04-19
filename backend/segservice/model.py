@@ -4,7 +4,7 @@ from collections import Counter
 from gensim.models.phrases import Phraser
 from gensim.models import Phrases
 from stop_words import get_stop_words
-from segservice.database import clean_data, number_replacement
+from segservice.database import clean_data, number_replacement, clean_data_no_nums
 
 
 class SmartSegmenter:
@@ -107,14 +107,20 @@ class SmartSegmenter:
         phrase_len = len(original_phrase)
         begin_phrase = record_text.lower().find(original_phrase)
 
-        if phrase in match_phrases:  # full match
+        print("0: " + phrase)
+        print("1: " + original_phrase)
+        print("2: " + user_selected.lower())
+        if original_phrase == user_selected.lower():
+            print("Found them")
+            segmentation_result['type'] = 'full_match'
+            K = 200.0
+        elif phrase in match_phrases:  # full match
             segmentation_result['type'] = 'full_match'
             K = 100.0
         else:  # no match
             K = 0
             segmentation_result['type'] = 'no_match'
             pass
-
         if record_text.lower() == original_phrase:
             score = K
         else:
@@ -128,7 +134,7 @@ class SmartSegmenter:
         segmentations = self.get_phrases_from_sentence(sentence)
         # segmentations are all in lowercase we need to lowercase the
         # user_selected phrase too
-        user_selected = clean_data(user_selected)
+        user_selected = clean_data_no_nums(user_selected)
         lower_selected_phrase = user_selected.lower()
         match_phrases = [p for p in segmentations if lower_selected_phrase in p]
         nonmatch_phrases = [p for p in segmentations if lower_selected_phrase not in p]
@@ -139,10 +145,20 @@ class SmartSegmenter:
                 'phrase': phrase,
                 'score': 0
             })
+            sentence = clean_data(sentence)
+            sent = sentence.lower().split()
+        modified_user_selection = clean_data(user_selected)
+        modified_user_selection = modified_user_selection.lower()
+        if not any(user_selected == x['phrase'] for x in ordered_segs):
+            print("ADDING IN THE USER SELECTION: " + modified_user_selection)
+            ordered_segs.append({
+                'phrase': modified_user_selection,
+                'score': 0})
         return sorted(ordered_segs,
                       key=lambda x: self.eval_phrase(x, user_selected, full_line,
                                                      match_phrases, nonmatch_phrases),
                       reverse=True)
+
 
 
 def only_full_match(segmentations):
