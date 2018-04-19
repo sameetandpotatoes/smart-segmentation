@@ -9,9 +9,18 @@ let currentTextOnPage = getTextOnCurrentPage();
 
 let requestedInfo = null;
 let targetDOMElement = null;
+let startSegmentationTimer = 'Segmentation Request to Raw Results';
 
 function sendPayloadToBackend(payload, callback) {
     chrome.runtime.sendMessage(payload, callback);
+}
+
+function onReceiveSegmentations(segmentations) {
+    console.timeEnd(startSegmentationTimer);
+    $('.loader').hide();
+    $('body').removeClass('noscroll');
+    let strs = segmentations.global.map(x => x['formatted_phrase']);
+    startSegmentation(targetDOMElement, strs);
 }
 
 // Takes a phrase and a segment and sends it to the backend
@@ -29,27 +38,29 @@ function handleSegmentation(selection, record, targetNode, activateSegmentationM
     if (activateSegmentationMode) {
         // Tell background to initiate segmentation mode
         sendPayloadToBackend({activateSegmentation: true}, function(response) {
-            let strs = response.segmentations.global.map(x => x.formatted_phrase);
-            console.log(strs);
-            startSegmentation(targetDOMElement, strs);
+            onReceiveSegmentations(response.segmentations);
         });
     }
 }
 
 chrome.runtime.onMessage.addListener(
-    function(backend, sender, sendResponse) {
-        if (backend.requestInfo) {
+    function(request, sender, sendResponse) {
+        if (request.requestInfo) {
+            console.time(startSegmentationTimer);
             sendResponse(requestedInfo);
-        } else if (backend.segmentations) {
-            console.log(backend);
-            let strs = backend.segmentations.global.map(x => x.formatted_phrase);
-            console.log(strs);
-            startSegmentation(targetDOMElement, strs);
+            $('.loader').show();
+            $('body').addClass('noscroll');
+            // TODO prevent scrolling
+        } else if (request.segmentations) {
+            onReceiveSegmentations(request.segmentations);
         }
     }
 );
 
 enableRightClickListener(handleSegmentation);
+
+// Add loader to screen
+$('body').after("<div class='loader'></div>");
 
 let currentUrl = window.location.href;
 sendPayloadToBackend({cleanedText: currentTextOnPage, currentPage: currentUrl},
