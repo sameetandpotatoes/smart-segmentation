@@ -106,14 +106,18 @@ function selectSegment(which) {
   selectCurrentSegment();
 }
 
-const leadingWhitePattern = /^\s+/m;
+const leadingWhitePattern = /^\s+/, whiteGlobalPattern = /\s+/g;
 
-function strStartingUnit(str) {
-  var lw = leadingWhitePattern.exec(str);
+function strStartingUnit(str, startPos = 0) {
+  // This is acceptable because Javascript is not multithreaded and there are
+  // no callbacks between these two lines
+  whiteGlobalPattern.lastIndex = startPos;
+  const lw = leadingWhitePattern.test(str[startPos]) ? whiteGlobalPattern.exec(str) : null;
+  
   if (lw) {
-    return {s: ' ', l: lw.length}
+    return {s: ' ', l: lw[0].length};
   } else {
-    return {s: str[0], l: 1}
+    return {s: str[startPos], l: 1};
   }
 }
 
@@ -122,7 +126,7 @@ function kmpFailure(str) {
   var i = 1, candidate = 0;
   
   while (i < str.length) {
-    var iUnit = strStartingUnit(str.slice(i)), cUnit = strStartingUnit(str.slice(candidate));
+    var iUnit = strStartingUnit(str, i), cUnit = strStartingUnit(str, candidate);
     
     if (iUnit.s === cUnit.s) {
       failureTable[i] = failureTable[candidate];
@@ -131,10 +135,10 @@ function kmpFailure(str) {
     } else {
       failureTable[i] = candidate;
       candidate = failureTable[candidate];
-      cUnit = strStartingUnit(str.slice(candidate));
+      cUnit = strStartingUnit(str, candidate);
       while (candidate >= 0 && iUnit.s != cUnit.s) {
         candidate = failureTable[candidate];
-        cUnit = strStartingUnit(str.slice(candidate));
+        cUnit = strStartingUnit(str, candidate);
       }
       i += iUnit.l;
       candidate += cUnit.l;
@@ -163,7 +167,8 @@ function elementIsVisible(elt) {
 class CurrentSegmentSelecter {
   constructor() {
     // Normalize spaces in this value so we can count align this.domLocations more easily on failure
-    this.textSegment = getCurrentSegment().replace(/\s+/m, ' ');
+    const givenSegment = getCurrentSegment();
+    this.textSegment = givenSegment.replace(/\s+/m, ' ');
     this.selRange = document.createRange();
     this.position = {node: thisJob.recordNode, index: 0};
     this.nodeStack = [];
@@ -209,8 +214,8 @@ class CurrentSegmentSelecter {
           this.position.index = leadingWhitePattern.exec(textContent).length;
         } else {
           this.lastMatchWasSpace = false;
-          const wUnit = strStartingUnit(this.textSegment.slice(this.curChar)),
-            sUnit = strStartingUnit(textContent.slice(index));
+          const wUnit = strStartingUnit(this.textSegment, this.curChar),
+            sUnit = strStartingUnit(textContent, index);
           if (wUnit.s === sUnit.s) {
             this.domLocations[this.curChar] = Object.assign({}, this.position);
             this.position.index += sUnit.l;
@@ -227,7 +232,7 @@ class CurrentSegmentSelecter {
           if (!this.lastMatchWasSpace) {
             // Match BR against whitespace
             skipElement = false;
-            const wUnit = strStartingUnit(this.textSegment.slice(this.curChar));
+            const wUnit = strStartingUnit(this.textSegment, this.curChar);
             if (wUnit.s === ' ') {
               this.domLocations[this.curChar] = {node: node, index: node.childNodes.length};
               this.moveToNextNode();
@@ -247,8 +252,8 @@ class CurrentSegmentSelecter {
           } else {
             skipElement = false;
             this.lastMatchWasSpace = false;
-            const wUnit = strStartingUnit(this.textSegment.slice(this.curChar)),
-              sUnit = strStartingUnit(this.position.elementalContent.slice(this.position.index));
+            const wUnit = strStartingUnit(this.textSegment, this.curChar),
+              sUnit = strStartingUnit(this.position.elementalContent, this.position.index);
             if (wUnit.s === sUnit.s) {
               this.domLocations[this.curChar] = {node: this.position.node, index: 0};
               this.position.index += sUnit.l;
@@ -300,7 +305,7 @@ class CurrentSegmentSelecter {
         } else {
           // Match leaving block element against whitespace
           skipElement = false;
-          const wUnit = strStartingUnit(this.textSegment.slice(this.curChar));
+          const wUnit = strStartingUnit(this.textSegment, this.curChar);
           if (wUnit.s === ' ') {
             this.domLocations[this.curChar] = {node: node.forElement, index: node.forElement.childNodes.length};
             this.moveToNextNode();
@@ -331,6 +336,7 @@ class CurrentSegmentSelecter {
   
   applySelection() {
     if (this.curChar < this.textSegment.length) {
+      console.log('[SmartSegmentation] Failed to find %o', this.textSegment);
       return false;
     }
     
