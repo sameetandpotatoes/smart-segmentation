@@ -290,10 +290,10 @@ class CurrentSegmentSelecter {
                 // We need to consume whitespace from this.textSegment or fail the match AND...
                 skipElement = false;
                 this.position.elementalContent = ' ';
-                
-                // Arrange that, when this node is "exited", we consume whitespace from this.textSegment _again_ (unless this.lastMatchWasSpace at that point)
-                this.nodeStack.push({nodeType: 'blockExit', forElement: node});
               }
+              
+              // Arrange that, when this node is "exited", we consume whitespace from this.textSegment _again_ (unless this.lastMatchWasSpace at that point)
+              this.nodeStack.push({nodeType: 'blockExit', forElement: node});
             }
           }
         }
