@@ -3,10 +3,10 @@
 import yaml
 import textwrap
 import os
+import six
+import time
 from segservice.database import format_data
 from segservice.model import SmartSegmenter
-import six
-import IPython
 
 # Pretty-print with colors
 GREEN = '\033[92m'
@@ -23,6 +23,7 @@ with open('data/raw_page_data.dat') as file:
 products = yaml.load(open('data/test_segs.yaml'))
 all_maps = []
 all_accuracies = []
+all_times = []
 segmenter = SmartSegmenter(format_data(data_stream))
 for product_line in products:
     for selected_phrase in product_line['segs']:
@@ -32,7 +33,9 @@ for product_line in products:
         if answers is None:
             answers = []
         answers.append(product_line['phrase'])
+        t0 = time.time()
         smart_segs = segmenter.get_smart_segmentations(product_line['phrase'], user_selection, product_line['phrase'])
+        all_times.append(time.time() - t0)
         # Remove the first one since it's what the user selected
         # We could remove this if we want to inflate our MAP score
         smart_segs = [x['formatted_phrase'] for x in smart_segs[1:]]
@@ -87,4 +90,8 @@ for product_line in products:
 
 print("Overall Mean Average Precision: {:.4f}".format(sum(all_maps)/len(all_maps)))
 print("Overall Accuracy: {:.4f}".format(sum(all_accuracies)/len(all_accuracies)))
+print("Total Segmentation Time (sec): {:.4f}".format(sum(all_times)))
+print("Average Segmentation Time (sec): {:.4f}".format(sum(all_times) / len(all_times)))
+print("Shortest Segmentation Time (sec): {:.4f}".format(min(all_times)))
+print("Longest Segmentation Time (sec): {:.4f}".format(max(all_times)))
 print(all_maps)
