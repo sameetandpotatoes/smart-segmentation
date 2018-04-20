@@ -266,8 +266,10 @@ class CurrentSegmentSelecter {
         } else if (elementIsVisible(node)) {
           const ariaLabel = node.attributes['aria-label'];
           if (ariaLabel) {
-            this.position.elementalContent = ' ' + ariaLabel + ' ';
+            this.position.elementalContent = ' ' + ariaLabel.value + ' ';
             skipElement = false;
+          } else if ((node.attributes['aria-hidden'] || {}).value == 'true') {
+            // We should skip this element
           } else {
             const eltStyle = getComputedStyle(node);
             if (eltStyle.display != 'inline') {
