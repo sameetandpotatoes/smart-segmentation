@@ -269,7 +269,9 @@ class CurrentSegmentSelecter {
             this.position.elementalContent = ' ' + ariaLabel.value + ' ';
             skipElement = false;
           } else if ((node.attributes['aria-hidden'] || {}).value == 'true') {
-            // We should skip this element
+            // We should not descend to the children of this element
+            skipElement = false;
+            this.moveToNextNode();
           } else {
             const eltStyle = getComputedStyle(node);
             if (eltStyle.display != 'inline') {
