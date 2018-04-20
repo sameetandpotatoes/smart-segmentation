@@ -17,8 +17,6 @@ function sendPayloadToBackend(payload, callback) {
 
 function onReceiveSegmentations(segmentations) {
     console.timeEnd(startSegmentationTimer);
-    $('.loader').hide();
-    $('body').removeClass('noscroll');
     let strs = segmentations.global.map(x => x['formatted_phrase']);
     startSegmentation(targetDOMElement, strs);
 }
@@ -48,9 +46,6 @@ chrome.runtime.onMessage.addListener(
         if (request.requestInfo) {
             console.time(startSegmentationTimer);
             sendResponse(requestedInfo);
-            $('.loader').show();
-            $('body').addClass('noscroll');
-            // TODO prevent scrolling
         } else if (request.segmentations) {
             onReceiveSegmentations(request.segmentations);
         }
@@ -58,9 +53,6 @@ chrome.runtime.onMessage.addListener(
 );
 
 enableRightClickListener(handleSegmentation);
-
-// Add loader to screen
-$('body').after("<div class='loader'></div>");
 
 let currentUrl = window.location.href;
 sendPayloadToBackend({cleanedText: currentTextOnPage, currentPage: currentUrl},
