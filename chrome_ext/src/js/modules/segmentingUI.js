@@ -212,6 +212,9 @@ class CurrentSegmentSelecter {
         } else if (index === 0 && this.lastMatchWasSpace && leadingWhitePattern.test(textContent)) {
           // Consume leading space as part of trailing space of last match
           this.position.index = leadingWhitePattern.exec(textContent).length;
+        } else if (textContent.charCodeAt(index) > 0x7F) {
+          // Server drops all non-ASCII characters
+          this.position.index += 1;
         } else {
           this.lastMatchWasSpace = false;
           const wUnit = strStartingUnit(this.textSegment, this.curChar),
