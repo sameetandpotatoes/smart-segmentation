@@ -184,6 +184,7 @@ class CurrentSegmentSelecter {
   moveToNextNode() {
     this.position.index = 0;
     delete this.position.elementalContent;
+    delete this.position.textContent;
     this.popFromNodeStack();
   }
 
@@ -193,19 +194,23 @@ class CurrentSegmentSelecter {
 
   searchStep() {
     const {node, index} = this.position;
+    let {textContent} = this.position;
     var skipElement = true;
     switch (node.nodeType) {
       case node.TEXT_NODE:
-        if (node.nodeValue.length <= index) {
+        if (typeof textContent === 'undefined') {
+          textContent = this.position.textContent = node.nodeValue;
+        }
+        if (textContent.length <= index) {
           // Move to next node
           this.moveToNextNode();
-        } else if (index === 0 && this.lastMatchWasSpace && leadingWhitePattern.test(node.nodeValue)) {
+        } else if (index === 0 && this.lastMatchWasSpace && leadingWhitePattern.test(textContent)) {
           // Consume leading space as part of trailing space of last match
-          this.position.index = leadingWhitePattern.exec(node.nodeValue).length;
+          this.position.index = leadingWhitePattern.exec(textContent).length;
         } else {
           this.lastMatchWasSpace = false;
           const wUnit = strStartingUnit(this.textSegment.slice(this.curChar)),
-            sUnit = strStartingUnit(node.nodeValue.slice(index));
+            sUnit = strStartingUnit(textContent.slice(index));
           if (wUnit.s === sUnit.s) {
             this.domLocations[this.curChar] = Object.assign({}, this.position);
             this.position.index += sUnit.l;
