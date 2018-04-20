@@ -248,6 +248,11 @@ class CurrentSegmentSelecter {
         } else if (this.position.elementalContent) {
           if (this.position.elementalContent.length <= this.position.index) {
             // Continue with skipping this element -- search has progressed
+            if (this.position.skipChildren) {
+              delete this.position.skipChildren;
+              this.moveToNextNode();
+              skipElement = false;
+            }
           } else if (this.position.index === 0 && this.lastMatchWasSpace) {
             // Consume this as part of trailing space of last match
             this.position.index = 1;
@@ -270,6 +275,7 @@ class CurrentSegmentSelecter {
           const ariaLabel = node.attributes['aria-label'];
           if (ariaLabel) {
             this.position.elementalContent = ' ' + ariaLabel.value + ' ';
+            this.position.skipChildren = true;
             skipElement = false;
           } else if ((node.attributes['aria-hidden'] || {}).value == 'true') {
             // We should not descend to the children of this element
