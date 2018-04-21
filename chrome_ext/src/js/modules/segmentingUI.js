@@ -106,14 +106,18 @@ function selectSegment(which) {
   selectCurrentSegment();
 }
 
-const leadingWhitePattern = /^\s+/m;
+const leadingWhitePattern = /^\s+/, whiteGlobalPattern = /\s+/g;
 
-function strStartingUnit(str) {
-  var lw = leadingWhitePattern.exec(str);
+function strStartingUnit(str, startPos = 0) {
+  // This is acceptable because Javascript is not multithreaded and there are
+  // no callbacks between these two lines
+  whiteGlobalPattern.lastIndex = startPos;
+  const lw = leadingWhitePattern.test(str[startPos]) ? whiteGlobalPattern.exec(str) : null;
+  
   if (lw) {
-    return {s: ' ', l: lw.length}
+    return {s: ' ', l: lw[0].length};
   } else {
-    return {s: str[0], l: 1}
+    return {s: str[startPos], l: 1};
   }
 }
 
@@ -122,7 +126,7 @@ function kmpFailure(str) {
   var i = 1, candidate = 0;
   
   while (i < str.length) {
-    var iUnit = strStartingUnit(str.slice(i)), cUnit = strStartingUnit(str.slice(candidate));
+    var iUnit = strStartingUnit(str, i), cUnit = strStartingUnit(str, candidate);
     
     if (iUnit.s === cUnit.s) {
       failureTable[i] = failureTable[candidate];
@@ -131,10 +135,10 @@ function kmpFailure(str) {
     } else {
       failureTable[i] = candidate;
       candidate = failureTable[candidate];
-      cUnit = strStartingUnit(str.slice(candidate));
+      cUnit = strStartingUnit(str, candidate);
       while (candidate >= 0 && iUnit.s != cUnit.s) {
         candidate = failureTable[candidate];
-        cUnit = strStartingUnit(str.slice(candidate));
+        cUnit = strStartingUnit(str, candidate);
       }
       i += iUnit.l;
       candidate += cUnit.l;
@@ -163,7 +167,8 @@ function elementIsVisible(elt) {
 class CurrentSegmentSelecter {
   constructor() {
     // Normalize spaces in this value so we can count align this.domLocations more easily on failure
-    this.textSegment = getCurrentSegment().replace(/\s+/m, ' ');
+    const givenSegment = getCurrentSegment();
+    this.textSegment = givenSegment.replace(/\s+/m, ' ');
     this.selRange = document.createRange();
     this.position = {node: thisJob.recordNode, index: 0};
     this.nodeStack = [];
@@ -184,6 +189,7 @@ class CurrentSegmentSelecter {
   moveToNextNode() {
     this.position.index = 0;
     delete this.position.elementalContent;
+    delete this.position.textContent;
     this.popFromNodeStack();
   }
 
@@ -193,19 +199,26 @@ class CurrentSegmentSelecter {
 
   searchStep() {
     const {node, index} = this.position;
+    let {textContent} = this.position;
     var skipElement = true;
     switch (node.nodeType) {
       case node.TEXT_NODE:
-        if (node.nodeValue.length <= index) {
+        if (typeof textContent === 'undefined') {
+          textContent = this.position.textContent = node.nodeValue;
+        }
+        if (textContent.length <= index) {
           // Move to next node
           this.moveToNextNode();
-        } else if (index === 0 && this.lastMatchWasSpace && leadingWhitePattern.test(node.nodeValue)) {
+        } else if (index === 0 && this.lastMatchWasSpace && leadingWhitePattern.test(textContent)) {
           // Consume leading space as part of trailing space of last match
-          this.position.index = leadingWhitePattern.exec(node.nodeValue).length;
+          this.position.index = leadingWhitePattern.exec(textContent).length;
+        } else if (textContent.charCodeAt(index) > 0x7F) {
+          // Server drops all non-ASCII characters
+          this.position.index += 1;
         } else {
           this.lastMatchWasSpace = false;
-          const wUnit = strStartingUnit(this.textSegment.slice(this.curChar)),
-            sUnit = strStartingUnit(node.nodeValue.slice(index));
+          const wUnit = strStartingUnit(this.textSegment, this.curChar),
+            sUnit = strStartingUnit(textContent, index);
           if (wUnit.s === sUnit.s) {
             this.domLocations[this.curChar] = Object.assign({}, this.position);
             this.position.index += sUnit.l;
@@ -222,7 +235,7 @@ class CurrentSegmentSelecter {
           if (!this.lastMatchWasSpace) {
             // Match BR against whitespace
             skipElement = false;
-            const wUnit = strStartingUnit(this.textSegment.slice(this.curChar));
+            const wUnit = strStartingUnit(this.textSegment, this.curChar);
             if (wUnit.s === ' ') {
               this.domLocations[this.curChar] = {node: node, index: node.childNodes.length};
               this.moveToNextNode();
@@ -235,6 +248,11 @@ class CurrentSegmentSelecter {
         } else if (this.position.elementalContent) {
           if (this.position.elementalContent.length <= this.position.index) {
             // Continue with skipping this element -- search has progressed
+            if (this.position.skipChildren) {
+              delete this.position.skipChildren;
+              this.moveToNextNode();
+              skipElement = false;
+            }
           } else if (this.position.index === 0 && this.lastMatchWasSpace) {
             // Consume this as part of trailing space of last match
             this.position.index = 1;
@@ -242,8 +260,8 @@ class CurrentSegmentSelecter {
           } else {
             skipElement = false;
             this.lastMatchWasSpace = false;
-            const wUnit = strStartingUnit(this.textSegment.slice(this.curChar)),
-              sUnit = strStartingUnit(this.position.elementalContent.slice(this.position.index));
+            const wUnit = strStartingUnit(this.textSegment, this.curChar),
+              sUnit = strStartingUnit(this.position.elementalContent, this.position.index);
             if (wUnit.s === sUnit.s) {
               this.domLocations[this.curChar] = {node: this.position.node, index: 0};
               this.position.index += sUnit.l;
@@ -256,8 +274,13 @@ class CurrentSegmentSelecter {
         } else if (elementIsVisible(node)) {
           const ariaLabel = node.attributes['aria-label'];
           if (ariaLabel) {
-            this.position.elementalContent = ' ' + ariaLabel + ' ';
+            this.position.elementalContent = ' ' + ariaLabel.value + ' ';
+            this.position.skipChildren = true;
             skipElement = false;
+          } else if ((node.attributes['aria-hidden'] || {}).value == 'true') {
+            // We should not descend to the children of this element
+            skipElement = false;
+            this.moveToNextNode();
           } else {
             const eltStyle = getComputedStyle(node);
             if (eltStyle.display != 'inline') {
@@ -267,10 +290,10 @@ class CurrentSegmentSelecter {
                 // We need to consume whitespace from this.textSegment or fail the match AND...
                 skipElement = false;
                 this.position.elementalContent = ' ';
-                
-                // Arrange that, when this node is "exited", we consume whitespace from this.textSegment _again_ (unless this.lastMatchWasSpace at that point)
-                this.nodeStack.push({nodeType: 'blockExit', forElement: node});
               }
+              
+              // Arrange that, when this node is "exited", we consume whitespace from this.textSegment _again_ (unless this.lastMatchWasSpace at that point)
+              this.nodeStack.push({nodeType: 'blockExit', forElement: node});
             }
           }
         }
@@ -295,7 +318,7 @@ class CurrentSegmentSelecter {
         } else {
           // Match leaving block element against whitespace
           skipElement = false;
-          const wUnit = strStartingUnit(this.textSegment.slice(this.curChar));
+          const wUnit = strStartingUnit(this.textSegment, this.curChar);
           if (wUnit.s === ' ') {
             this.domLocations[this.curChar] = {node: node.forElement, index: node.forElement.childNodes.length};
             this.moveToNextNode();
@@ -326,6 +349,7 @@ class CurrentSegmentSelecter {
   
   applySelection() {
     if (this.curChar < this.textSegment.length) {
+      console.log('[SmartSegmentation] Failed to find %o', this.textSegment);
       return false;
     }
     
