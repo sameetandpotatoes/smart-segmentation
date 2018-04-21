@@ -30,7 +30,9 @@ function prettyPrintSegmentations(segmentations) {
 function onReceiveSegmentations(segmentations) {
     console.timeEnd(startSegmentationTimer);
     prettyPrintSegmentations(segmentations);
-    startSegmentation(targetDOMElement, segmentations.global);
+    startSegmentation(targetDOMElement, segmentations.global, function(segmentation) {
+        console.log("The user copied this segmentation: " + segmentation);
+    });
 }
 
 // Takes a phrase and a segment and sends it to the backend

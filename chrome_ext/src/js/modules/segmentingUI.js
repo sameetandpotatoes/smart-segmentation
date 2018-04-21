@@ -23,7 +23,8 @@ $(`<div>&shy;<style>
 </style></div>`).appendTo(document.body);
 $(`<div id="${messageBoxId}">
   <ul>
-    <li>Up or down arrow to change selection</li>
+    <li>Up or down arrow to select different length segmentations</li>
+    <li>Left or right arrow to move between segmentations of equal length</li>
     <li>SPACE to copy to clipboard</li>
     <li>ENTER to copy to clipboard and dismiss</li>
     <li>ESC to dismiss</li>
@@ -46,6 +47,7 @@ const thisJob = {
   // segmentation copied by the user
   onselection: null
 };
+const SegmentationMoves = Object.freeze({ next_length: {}, previous_length: {}, next: {}, previous: {} });
 var segmentations = [];
 
 
@@ -63,10 +65,16 @@ function keydownHandler(e) {
 
   switch (e.key) {
     case "ArrowUp":
-      selectSegment('previous');
+      selectSegment(SegmentationMoves.previous_length);
       break;
     case "ArrowDown":
-      selectSegment('next');
+      selectSegment(SegmentationMoves.next_length);
+      break;
+    case "ArrowLeft":
+      selectSegment(SegmentationMoves.previous);
+      break;
+    case "ArrowRight":
+      selectSegment(SegmentationMoves.next);
       break;
     case " ":
       copySelected();
@@ -85,24 +93,38 @@ function keydownHandler(e) {
 document.addEventListener('keydown', keydownHandler, {capture: true});
 
 function selectSegment(which) {
-  var indexIncrement = 0;
-
+  let {currentSegmentationIndex: segIndex, segmentations} = thisJob;
+  let currSegmentationLength = segmentations[segIndex]['phrase_length'];
+  let unequalLengthForNextPrev;
   switch (which) {
-    case 'next':
-      indexIncrement = 1;
+    case SegmentationMoves.next:
+      segIndex += 1;
       break;
-    case 'previous':
-      indexIncrement = -1;
+    case SegmentationMoves.previous:
+      segIndex -= -1;
+      break;
+    case SegmentationMoves.next_length:
+      segIndex += 1;
+      while (segIndex < segmentations.length && segmentations[segIndex]['phrase_length'] == currSegmentationLength) {
+          segIndex += 1;
+      }
+      break;
+    case SegmentationMoves.previous_length:
+      segIndex -= 1;
+      while (segIndex >= 0 && segmentations[segIndex]['phrase_length'] == currSegmentationLength) {
+        segIndex -= 1;
+      }
       break;
   }
 
-  // Adjust current index by indexIncrement and apply text selection
-  let {currentSegmentationIndex: segIndex, segmentations} = thisJob;
-  segIndex = (
-    segIndex + indexIncrement + segmentations.length
-  ) % segmentations.length;
-  thisJob.currentSegmentationIndex = segIndex;
+  // validate segIndex
+  let outOfBounds = segIndex < 0 || segIndex >= segmentations.length;
+  let leftOrRight = which == SegmentationMoves.next || which == SegmentationMoves.previous;
+  if (outOfBounds || (leftOrRight && segmentations[segIndex]['phrase_length'] != currSegmentationLength)) {
+      return;
+  }
 
+  thisJob.currentSegmentationIndex = segIndex;
   selectCurrentSegment();
 }
 
