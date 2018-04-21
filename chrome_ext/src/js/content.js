@@ -15,10 +15,22 @@ function sendPayloadToBackend(payload, callback) {
     chrome.runtime.sendMessage(payload, callback);
 }
 
+function prettyPrintSegmentations(segmentations) {
+    console.log("Global Segmentations");
+    segmentations.global.forEach(function(element, index) {
+        console.log((index + 1) + ":\t" + element['formatted_phrase']);
+    });
+
+    console.log("\nLocal Segmentations");
+    segmentations.local.forEach(function(element, index) {
+        console.log((index + 1) + ":\t" + element['formatted_phrase']);
+    });
+}
+
 function onReceiveSegmentations(segmentations) {
     console.timeEnd(startSegmentationTimer);
-    let strs = segmentations.global.map(x => x['formatted_phrase']);
-    startSegmentation(targetDOMElement, strs);
+    prettyPrintSegmentations(segmentations);
+    startSegmentation(targetDOMElement, segmentations.global);
 }
 
 // Takes a phrase and a segment and sends it to the backend
