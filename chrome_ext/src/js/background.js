@@ -5,6 +5,7 @@ import { createNotif } from './modules/notificationGenerator.js';
 const BACKEND_URL = (process.env.NODE_ENV === 'development')
     ? "http://localhost:5000"
     : "https://smartseg.ga";
+let visitedURLS = [];
 
 function getUrl(sub_url) {
   return BACKEND_URL + sub_url;
@@ -19,7 +20,7 @@ function sendRequestToBackend(subUrl, request, callback) {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
     }
-}).done(callback);
+  }).done(callback);
 }
 
 function sendRequestToContent(payload, callback) {
@@ -59,7 +60,9 @@ chrome.runtime.onMessage.addListener(
             sendResponse("background script does not support requests from the extension at this time");
         }
 
-        if (request.cleanedText) {
+        // Don't add URLs twice to a given session to stop bloating the database of skewed data
+        if (request.cleanedText && !visitedURLS.includes(request.currentPage)) {
+            visitedURLS.append(request.currentPage);
             sendRequestToBackend('/frequencies', request, function(data) {
                 sendResponse('Sent text to backend!');
             });
@@ -67,6 +70,10 @@ chrome.runtime.onMessage.addListener(
             getSegmentationInfoFromPage(function(data) {
                 sendResponse(data);
             });
+        } else if (request.feedback) {
+            sendRequestToBackend('/feedback', request, function(data) {
+                sendResponse('Sent feedback to backend!');
+            })
         }
         // Needed because sendResponse (the callback) is used asynchronously
         return true;

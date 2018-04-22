@@ -31,7 +31,12 @@ function onReceiveSegmentations(segmentations) {
     console.timeEnd(startSegmentationTimer);
     prettyPrintSegmentations(segmentations);
     startSegmentation(targetDOMElement, segmentations.global, function(segmentation) {
-        console.log("The user copied this segmentation: " + segmentation);
+        console.log("Recording feedback about segmentation: " + segmentation);
+        sendPayloadToBackend({feedback: true,
+            userSelection: requestedInfo['userSelection'],
+            segmentation: segmentation
+        }, function(response) {
+        });
     });
 }
 
