@@ -200,13 +200,8 @@ function getRightClickedTextFromEvent(e) {
       segment: null
     };
   }
-  // TODO based on how we get user-selected text, this can be refactored
-  // into the below method
   const userSelection = (document.selection && document.selection.createRange().text) ||
                         (window.getSelection && window.getSelection().toString());
-
-  // Some logic will have to be done here to determine which is the user right-clicked word
-  // and which is the full selection (based on whether a link was right-clicked or not)
   return {
     phrase: userSelection.toString(),
     segment: selectedText.toString()
@@ -231,18 +226,6 @@ function getSelectedTextFromEvent(e) {
     segment: selectedText.toString()
   };
 }
-
-// Create an invisible input with the text, copy the text, and remove the input
-function copyToClipboard(text) {
-  const input = document.createElement('input');
-  input.style.position = 'fixed';
-  input.style.opacity = 0;
-  input.value = text;
-  document.body.appendChild(input);
-  input.select();
-  document.execCommand('Copy');
-  document.body.removeChild(input);
-};
 
 function getTextOnCurrentPage() {
   return getTextFromElement(document.body).trim();

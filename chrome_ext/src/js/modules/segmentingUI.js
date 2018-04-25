@@ -23,7 +23,8 @@ $(`<div>&shy;<style>
 </style></div>`).appendTo(document.body);
 $(`<div id="${messageBoxId}">
   <ul>
-    <li>Up or down arrow to change selection</li>
+    <li>Up or down arrow to select different length segmentations</li>
+    <li>Left or right arrow to move between segmentations of equal length</li>
     <li>SPACE to copy to clipboard</li>
     <li>ENTER to copy to clipboard and dismiss</li>
     <li>ESC to dismiss</li>
@@ -33,7 +34,7 @@ $(`<div id="${messageBoxId}">
 }).appendTo(document.body);
 
 const thisJob = {
-  // This property contains the current list of segmentations
+  // This property contains the current list of segmentation objects
   segmentations: [],
 
   // This property indexes into *segmentations* for the currently selected one
@@ -46,6 +47,7 @@ const thisJob = {
   // segmentation copied by the user
   onselection: null
 };
+const SegmentationMoves = Object.freeze({ next_length: {}, previous_length: {}, next: {}, previous: {} });
 var segmentations = [];
 
 
@@ -63,10 +65,16 @@ function keydownHandler(e) {
 
   switch (e.key) {
     case "ArrowUp":
-      selectSegment('previous');
+      selectSegment(SegmentationMoves.previous_length);
       break;
     case "ArrowDown":
-      selectSegment('next');
+      selectSegment(SegmentationMoves.next_length);
+      break;
+    case "ArrowLeft":
+      selectSegment(SegmentationMoves.previous);
+      break;
+    case "ArrowRight":
+      selectSegment(SegmentationMoves.next);
       break;
     case " ":
       copySelected();
@@ -85,24 +93,37 @@ function keydownHandler(e) {
 document.addEventListener('keydown', keydownHandler, {capture: true});
 
 function selectSegment(which) {
-  var indexIncrement = 0;
-
+  let {currentSegmentationIndex: segIndex, segmentations} = thisJob;
+  let currSegmentationLength = segmentations[segIndex]['phrase_length'];
+  let unequalLengthForNextPrev;
   switch (which) {
-    case 'next':
-      indexIncrement = 1;
+    case SegmentationMoves.next:
+      segIndex += 1;
       break;
-    case 'previous':
-      indexIncrement = -1;
+    case SegmentationMoves.previous:
+      segIndex -= -1;
+      break;
+    case SegmentationMoves.next_length:
+      segIndex += 1;
+      while (segIndex < segmentations.length && segmentations[segIndex]['phrase_length'] == currSegmentationLength) {
+          segIndex += 1;
+      }
+      break;
+    case SegmentationMoves.previous_length:
+      segIndex -= 1;
+      while (segIndex >= 0 && segmentations[segIndex]['phrase_length'] == currSegmentationLength) {
+        segIndex -= 1;
+      }
       break;
   }
+  // validate segIndex
+  let outOfBounds = segIndex < 0 || segIndex >= segmentations.length;
+  let leftOrRight = which == SegmentationMoves.next || which == SegmentationMoves.previous;
+  if (outOfBounds || (leftOrRight && segmentations[segIndex]['phrase_length'] != currSegmentationLength)) {
+      return;
+  }
 
-  // Adjust current index by indexIncrement and apply text selection
-  let {currentSegmentationIndex: segIndex, segmentations} = thisJob;
-  segIndex = (
-    segIndex + indexIncrement + segmentations.length
-  ) % segmentations.length;
   thisJob.currentSegmentationIndex = segIndex;
-
   selectCurrentSegment();
 }
 
@@ -113,7 +134,7 @@ function strStartingUnit(str, startPos = 0) {
   // no callbacks between these two lines
   whiteGlobalPattern.lastIndex = startPos;
   const lw = leadingWhitePattern.test(str[startPos]) ? whiteGlobalPattern.exec(str) : null;
-  
+
   if (lw) {
     return {s: ' ', l: lw[0].length};
   } else {
@@ -124,10 +145,10 @@ function strStartingUnit(str, startPos = 0) {
 function kmpFailure(str) {
   var failureTable = Array(str.length).fill(-1);
   var i = 1, candidate = 0;
-  
+
   while (i < str.length) {
     var iUnit = strStartingUnit(str, i), cUnit = strStartingUnit(str, candidate);
-    
+
     if (iUnit.s === cUnit.s) {
       failureTable[i] = failureTable[candidate];
       i += iUnit.l;
@@ -144,9 +165,9 @@ function kmpFailure(str) {
       candidate += cUnit.l;
     }
   }
-  
+
   failureTable[i] = candidate;
-  
+
   return failureTable;
 }
 
@@ -174,11 +195,11 @@ class CurrentSegmentSelecter {
     this.nodeStack = [];
     this.curChar = 0;
     this.lastMatchWasSpace = false;
-    
+
     this.failureTable = kmpFailure(this.textSegment);
     this.domLocations = Array(this.textSegment.length);
   }
-  
+
   popFromNodeStack() {
     let poppedNode = (this.position.node = this.nodeStack.pop());
     if (poppedNode && poppedNode.nextSibling) {
@@ -229,7 +250,7 @@ class CurrentSegmentSelecter {
           }
         }
         break;
-      
+
       case node.ELEMENT_NODE:
         if (node.tagName == 'BR') {
           if (!this.lastMatchWasSpace) {
@@ -291,7 +312,7 @@ class CurrentSegmentSelecter {
                 skipElement = false;
                 this.position.elementalContent = ' ';
               }
-              
+
               // Arrange that, when this node is "exited", we consume whitespace from this.textSegment _again_ (unless this.lastMatchWasSpace at that point)
               this.nodeStack.push({nodeType: 'blockExit', forElement: node});
             }
@@ -310,7 +331,7 @@ class CurrentSegmentSelecter {
           }
         }
         break;
-      
+
       case 'blockExit':
         // Special case for possibly consuming whitespace when exiting block node
         if (this.lastMatchWasSpace) {
@@ -329,13 +350,13 @@ class CurrentSegmentSelecter {
           }
         }
         break;
-      
+
       default:
         this.moveToNextNode();
         break;
     }
   }
-  
+
   matchFailed(onSkipThis) {
     const failTo = this.failureTable[this.curChar];
     this.domLocations.splice(0, failTo,
@@ -343,23 +364,23 @@ class CurrentSegmentSelecter {
     this.curChar = failTo;
     if (this.curChar < 0) {
       this.curChar = 0;
-      onSkipThis(); 
+      onSkipThis();
     }
   }
-  
+
   applySelection() {
     if (this.curChar < this.textSegment.length) {
       console.log('[SmartSegmentation] Failed to find %o', this.textSegment);
       return false;
     }
-    
+
     this.selRange.setStart(this.domLocations[0].node, this.domLocations[0].index);
     const {node} = this.position;
     switch (node.nodeType) {
       case node.TEXT_NODE:
         this.selRange.setEnd(node, this.position.index);
         break;
-      
+
       case node.ELEMENT_NODE:
         this.selRange.setEnd(node, node.childNodes.length);
         break;
@@ -374,17 +395,14 @@ class CurrentSegmentSelecter {
 
   run() {
     while(this.canSearch()) {
-      console.log(this.canSearch());
       this.searchStep();
     }
-    console.log("Apply selection");
     return this.applySelection();
   }
 }
 
 function selectCurrentSegment() {
   const segsel = new CurrentSegmentSelecter();
-  console.log(segsel);
   segsel.run();
 }
 
@@ -399,7 +417,7 @@ function positionUI(selRect) {
 
 function getCurrentSegment() {
   const {segmentations, currentSegmentationIndex: segIndex} = thisJob;
-  return segmentations[segIndex];
+  return segmentations[segIndex]['formatted_phrase'];
 }
 
 function copySelected() {
@@ -423,7 +441,7 @@ function dismissUI() {
  * - targetNode:
  *      the DOM node targeted by the triggering event
  * - derivedSegmentations:
- *      an Array or Strings giving the segmentations to try to represent in the UI
+ *      an Array of Objects giving the segmentations to try to represent in the UI
  * - onselection (optional):
  *      a callback function that receives any segmentation copied to the clipboard with the UI
  */
@@ -434,7 +452,6 @@ export function startSegmentation(targetNode, derivedSegmentations, onselection)
     recordNode: recordContaining(targetNode),
     onselection: onselection
   });
-  console.log("Select current segment");
   selectCurrentSegment();
 }
 

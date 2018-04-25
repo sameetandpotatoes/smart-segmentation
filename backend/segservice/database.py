@@ -19,9 +19,7 @@ def clean_page_data(raw_page_text):
 
 
 def clean_data(text):
-    # TODO: Doubles?
     text = text.encode('utf-8').decode()
-    # removed_floats = re.sub(r'\d+\.\d+', '####', text) # turns floats into #
     removed_nums = re.sub(r'\d+', number_replacement, text)  # turns integers into #
     return removed_nums
 

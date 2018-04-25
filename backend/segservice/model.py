@@ -1,11 +1,9 @@
 import string
 import re
 from collections import Counter
-from gensim.models.phrases import Phraser
 from gensim.models import Phrases
 from stop_words import get_stop_words
 from segservice.database import clean_data, number_replacement, clean_data_no_nums
-import IPython
 
 
 class SmartSegmenter:
@@ -101,8 +99,7 @@ class SmartSegmenter:
             rt_lower = rt_lower[rt_lower.find(next_part_of_phrase) + len(next_part_of_phrase):]
         return og_phrase.strip()
 
-    def eval_phrase(self, segmentation_result, user_selected, record_text):
-        phrase = segmentation_result['phrase']
+    def eval_phrase(self, phrase, user_selected, record_text):
         original_phrase = self.reconstruct_original_phrase(record_text, phrase)
         num_words_in_phrase = len(original_phrase.split(" "))
         phrase_len = len(original_phrase)
@@ -117,10 +114,10 @@ class SmartSegmenter:
             score = K + (0.01 * phrase_len) / (num_words_in_phrase ** 1.15)
 
         # Add in the formatted phrase to the dict
-        segmentation_result['formatted_phrase'] = record_text[begin_phrase:begin_phrase + phrase_len]
+        formatted_phrase = record_text[begin_phrase:begin_phrase + phrase_len]
         # Round score to 4 decimal places
-        segmentation_result['score'] = "{:.4f}".format(score)
-        return score
+        score = "{:.4f}".format(score)
+        return formatted_phrase, score
 
     def get_smart_segmentations(self, sentence, user_selected, full_line):
         segmentations = self.get_phrases_from_sentence(sentence)
@@ -128,10 +125,15 @@ class SmartSegmenter:
         user_selected_seg = clean_data(user_selected).lower()
         segmentations.append(user_selected_seg)
         ordered_segs = []
+        longest_phrase = full_line.count(" ") + 1
+
         for phrase in segmentations:
+            formatted_phrase, score = self.eval_phrase(phrase, user_selected, full_line)
             ordered_segs.append({
                 'phrase': phrase,
-                'score': 0
+                'formatted_phrase': formatted_phrase,
+                'phrase_length': formatted_phrase.count(" ") + 1,
+                'score': score
             })
-        ordered_segs = sorted(ordered_segs, key=lambda x: self.eval_phrase(x, user_selected, full_line), reverse=True)
+        ordered_segs = sorted(ordered_segs, key=lambda x: (abs(longest_phrase - x['phrase_length']), x['score']), reverse=True)
         return [s for s in ordered_segs if user_selected in s['formatted_phrase']]

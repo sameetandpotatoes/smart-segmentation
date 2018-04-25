@@ -37,7 +37,7 @@ for product_line in products:
         smart_segs = segmenter.get_smart_segmentations(product_line['phrase'], user_selection, product_line['phrase'])
         all_times.append(time.time() - t0)
         # Remove the first one since it's what the user selected
-        # We could remove this if we want to inflate our MAP score
+        # We could remove this if we want to inflate our MAP score (and add it to the data folder as well)
         smart_segs = [x['formatted_phrase'] for x in smart_segs[1:]]
         assert(len(answers) > 0 and len(smart_segs) > 0)
         precision_at_k = [0] * max(len(answers), len(smart_segs))
