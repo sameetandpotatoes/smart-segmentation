@@ -142,7 +142,7 @@ function onlyAsciiContent(s) {
 }
 
 function getRecordTextFromEvent(e) {
-  return getTextFromElement(recordContaining(e.target)).trim();
+  return getTextFromElement(recordContaining(e.path[1])).trim();
 }
 
 function wrapHTMLString(s) {
