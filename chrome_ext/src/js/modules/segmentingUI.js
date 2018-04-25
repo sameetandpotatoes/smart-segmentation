@@ -116,7 +116,6 @@ function selectSegment(which) {
       }
       break;
   }
-
   // validate segIndex
   let outOfBounds = segIndex < 0 || segIndex >= segmentations.length;
   let leftOrRight = which == SegmentationMoves.next || which == SegmentationMoves.previous;
@@ -396,17 +395,14 @@ class CurrentSegmentSelecter {
 
   run() {
     while(this.canSearch()) {
-      console.log(this.canSearch());
       this.searchStep();
     }
-    console.log("Apply selection");
     return this.applySelection();
   }
 }
 
 function selectCurrentSegment() {
   const segsel = new CurrentSegmentSelecter();
-  console.log(segsel);
   segsel.run();
 }
 
@@ -456,7 +452,6 @@ export function startSegmentation(targetNode, derivedSegmentations, onselection)
     recordNode: recordContaining(targetNode),
     onselection: onselection
   });
-  console.log("Select current segment");
   selectCurrentSegment();
 }
 

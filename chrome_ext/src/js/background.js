@@ -62,7 +62,7 @@ chrome.runtime.onMessage.addListener(
 
         // Don't add URLs twice to a given session to stop bloating the database of skewed data
         if (request.cleanedText && !visitedURLS.includes(request.currentPage)) {
-            visitedURLS.append(request.currentPage);
+            visitedURLS.push(request.currentPage);
             sendRequestToBackend('/frequencies', request, function(data) {
                 sendResponse('Sent text to backend!');
             });

@@ -77,6 +77,6 @@ let currentUrl = window.location.href;
 sendPayloadToBackend({cleanedText: currentTextOnPage, currentPage: currentUrl},
     function(response) {
         // empty
-        console.log("Sent text to backend!");
+        console.log(response);
     }
 );
