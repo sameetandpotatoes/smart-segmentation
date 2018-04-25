@@ -37,8 +37,6 @@ function enableRightClickListener(saveSegmentationQuery) {
             var str = range.toString().trim();
             wordSelected = str;
         }
-        // Remove punctuation from string in case that was part of the word
-        wordSelected = wordSelected.replace(/[^A-Za-z0-9_]/g, "");
 
         let selectedWord = wordSelected !== "" && segment !== null;
 
