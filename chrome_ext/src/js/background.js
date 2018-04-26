@@ -46,6 +46,14 @@ function getSegmentationInfoFromPage(callback) {
     });
 }
 
+function saveSegTypeToStorage() {
+    chrome.storage.sync.set({ "segType" : segType }, function() {
+        if (chrome.runtime.error) {
+          console.log("Runtime error.");
+        }
+    });
+}
+
 // When a user wants to segment, they ask for data from content.js,
 // and then load segmentation mode
 chrome.runtime.onInstalled.addListener(function() {
@@ -54,6 +62,7 @@ chrome.runtime.onInstalled.addListener(function() {
         "title": "Enter Segmentation Mode",
         "contexts": ["all"], // TODO make it only available for right-click? Not sure of options right now
     });
+    saveSegTypeToStorage();
 });
 chrome.contextMenus.onClicked.addListener(function(info, tab) {
     getSegmentationInfoFromPage(function(data) {
@@ -64,9 +73,7 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
-        if (!sender.tab) {
-            sendResponse("background script does not support requests from the extension at this time");
-        }
+        console.log(request);
 
         // Don't add URLs twice to a given session to stop bloating the database of skewed data
         if (request.cleanedText && !visitedURLS.includes(request.currentPage)) {
@@ -84,6 +91,7 @@ chrome.runtime.onMessage.addListener(
             })
         } else if (request.segmentation_type) {
             segType = request.segmentation_type;
+            saveSegTypeToStorage();
         }
         // Needed because sendResponse (the callback) is used asynchronously
         return true;
