@@ -24,6 +24,12 @@ class SegmentRequest:
         return self._req_data[req_data_key].encode('ascii', errors="ignore").decode()
 
     @property
+    def seg_type(self):
+        if not hasattr(self, '_seg_type'):
+            self._seg_type = self._cleaned_req_value('segmentationType')
+        return self._seg_type
+
+    @property
     def page_text(self):
         if not hasattr(self, '_page_text'):
             self._page_text = self._cleaned_req_value('pageText')
@@ -46,13 +52,18 @@ def get_smart_segmentations(data, input):
 
 @app.method('/segments')
 def get_segmentations(input: SegmentRequest):
+    print("Received {} segmentation request".format(input.seg_type))
+    segmentations = []
+
+    if input.seg_type == 'global':
+        segmentations = get_smart_segmentations(database.get_training_data(), input)
+    elif input.seg_type == 'local':
+        segmentations = get_smart_segmentations(format_data(input.page_text), input)
+    print(segmentations)
     return {
         'userSelection': input.user_selection,
         'recordText': input.full_line,
-        'segmentations': {
-            'global': get_smart_segmentations(database.get_training_data(), input),
-            'local': get_smart_segmentations(format_data(input.page_text), input)
-        }
+        'segmentations': segmentations
     }
 
 # This is for a health check and uses app.route instead of app.method

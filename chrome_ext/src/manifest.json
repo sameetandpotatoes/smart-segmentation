@@ -21,7 +21,8 @@
     "tabs",
     "<all_urls>",
     "contextMenus",
-    "notifications"
+    "notifications",
+    "storage"
   ],
   "web_accessible_resources": [ "js/*", "html/*", "css/*", "images/*" ],
   "content_security_policy": "script-src 'self'; object-src 'self'",

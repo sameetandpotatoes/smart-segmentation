@@ -1,4 +1,17 @@
-// Invoked when the smart segmentation button on the Chrome toolbar is clicked.
+import $ from 'jquery';
 
-// I don't see any use for this, except maybe to disable the plugin manually on a certain page.
-console.log('POPUP SCRIPT WORKS!');
+$(document).ready(function() {
+    chrome.storage.sync.get("segType", function(segType) {
+      if (!chrome.runtime.error) {
+        $('#type_' + segType['segType']).prop('checked', true);
+      }
+    });
+
+    $('input[type="radio"]').click(function() {
+        if ($(this).is(':checked')) {
+            chrome.runtime.sendMessage({ segmentation_type: $(this).val() }, function(response) {
+                console.log(response);
+            });
+        }
+    });
+});
