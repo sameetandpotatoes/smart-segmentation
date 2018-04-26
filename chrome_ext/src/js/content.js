@@ -16,13 +16,8 @@ function sendPayloadToBackend(payload, callback) {
 }
 
 function prettyPrintSegmentations(segmentations) {
-    console.log("Global Segmentations");
-    segmentations.global.forEach(function(element, index) {
-        console.log((index + 1) + ":\t" + element['formatted_phrase']);
-    });
-
-    console.log("\nLocal Segmentations");
-    segmentations.local.forEach(function(element, index) {
+    console.log("Segmentations");
+    segmentations.forEach(function(element, index) {
         console.log((index + 1) + ":\t" + element['formatted_phrase']);
     });
 }
@@ -30,12 +25,13 @@ function prettyPrintSegmentations(segmentations) {
 function onReceiveSegmentations(segmentations) {
     console.timeEnd(startSegmentationTimer);
     prettyPrintSegmentations(segmentations);
-    startSegmentation(targetDOMElement, segmentations.global, function(segmentation) {
+    startSegmentation(targetDOMElement, segmentations, function(segmentation) {
         console.log("Recording feedback about segmentation: " + segmentation);
         sendPayloadToBackend({feedback: true,
             userSelection: requestedInfo['userSelection'],
             segmentation: segmentation
         }, function(response) {
+            console.log(response);
         });
     });
 }
