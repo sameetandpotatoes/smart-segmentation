@@ -94,6 +94,7 @@ document.addEventListener('keydown', keydownHandler, {capture: true});
 
 function selectSegment(which) {
   let {currentSegmentationIndex: segIndex, segmentations} = thisJob;
+  const origSegIndex = segIndex;
   let currSegmentationLength = segmentations[segIndex]['phrase_length'];
   let unequalLengthForNextPrev;
   for (let selectionSucceeded = false; !selectionSucceeded; ) {
@@ -121,7 +122,8 @@ function selectSegment(which) {
     let outOfBounds = segIndex < 0 || segIndex >= segmentations.length;
     let leftOrRight = which == SegmentationMoves.next || which == SegmentationMoves.previous;
     if (outOfBounds || (leftOrRight && segmentations[segIndex]['phrase_length'] != currSegmentationLength)) {
-        return;
+      thisJob.currentSegmentationIndex = origSegIndex;
+      return;
     }
 
     thisJob.currentSegmentationIndex = segIndex;
