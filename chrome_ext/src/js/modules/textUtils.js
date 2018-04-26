@@ -59,7 +59,8 @@ function occupiedSpace(selector) {
 // element if no such record is found.
 function recordContaining(elt) {
   const $elt = $(elt), eltRect = elt.getBoundingClientRect();
-  for (const ancestorElt of nonInlineAncestors(elt)) {
+  const nia = nonInlineAncestors(elt);
+  for (const ancestorElt of nia) {
     const ancestorRect = ancestorElt.getBoundingClientRect();
     if (
       eltRect.top < ancestorRect.top ||
@@ -86,7 +87,7 @@ function recordContaining(elt) {
       }
     }
   }
-  return elt;
+  return nia[nia.length - 1] || elt;
 }
 
 function getTextFromElement(elt) {
