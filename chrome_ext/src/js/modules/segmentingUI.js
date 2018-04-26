@@ -94,37 +94,41 @@ document.addEventListener('keydown', keydownHandler, {capture: true});
 
 function selectSegment(which) {
   let {currentSegmentationIndex: segIndex, segmentations} = thisJob;
+  const origSegIndex = segIndex;
   let currSegmentationLength = segmentations[segIndex]['phrase_length'];
   let unequalLengthForNextPrev;
-  switch (which) {
-    case SegmentationMoves.next:
-      segIndex += 1;
-      break;
-    case SegmentationMoves.previous:
-      segIndex -= -1;
-      break;
-    case SegmentationMoves.next_length:
-      segIndex += 1;
-      while (segIndex < segmentations.length && segmentations[segIndex]['phrase_length'] == currSegmentationLength) {
-          segIndex += 1;
-      }
-      break;
-    case SegmentationMoves.previous_length:
-      segIndex -= 1;
-      while (segIndex >= 0 && segmentations[segIndex]['phrase_length'] == currSegmentationLength) {
+  for (let selectionSucceeded = false; !selectionSucceeded; ) {
+    switch (which) {
+      case SegmentationMoves.next:
+        segIndex += 1;
+        break;
+      case SegmentationMoves.previous:
+        segIndex -= -1;
+        break;
+      case SegmentationMoves.next_length:
+        segIndex += 1;
+        while (segIndex < segmentations.length && segmentations[segIndex]['phrase_length'] == currSegmentationLength) {
+            segIndex += 1;
+        }
+        break;
+      case SegmentationMoves.previous_length:
         segIndex -= 1;
-      }
-      break;
-  }
-  // validate segIndex
-  let outOfBounds = segIndex < 0 || segIndex >= segmentations.length;
-  let leftOrRight = which == SegmentationMoves.next || which == SegmentationMoves.previous;
-  if (outOfBounds || (leftOrRight && segmentations[segIndex]['phrase_length'] != currSegmentationLength)) {
+        while (segIndex >= 0 && segmentations[segIndex]['phrase_length'] == currSegmentationLength) {
+          segIndex -= 1;
+        }
+        break;
+    }
+    // validate segIndex
+    let outOfBounds = segIndex < 0 || segIndex >= segmentations.length;
+    let leftOrRight = which == SegmentationMoves.next || which == SegmentationMoves.previous;
+    if (outOfBounds || (leftOrRight && segmentations[segIndex]['phrase_length'] != currSegmentationLength)) {
+      thisJob.currentSegmentationIndex = origSegIndex;
       return;
-  }
+    }
 
-  thisJob.currentSegmentationIndex = segIndex;
-  selectCurrentSegment();
+    thisJob.currentSegmentationIndex = segIndex;
+    selectionSucceeded = selectCurrentSegment();
+  }
 }
 
 const leadingWhitePattern = /^\s+/, whiteGlobalPattern = /\s+/g;
@@ -245,6 +249,7 @@ class CurrentSegmentSelecter {
             this.position.index += sUnit.l;
             this.curChar += wUnit.l;
             this.lastMatchWasSpace = wUnit.s === ' ';
+            this.fixContainment(() => {this.position.index += sUnit.l;});
           } else {
             this.matchFailed(() => {this.position.index += sUnit.l;});
           }
@@ -262,6 +267,7 @@ class CurrentSegmentSelecter {
               this.moveToNextNode();
               this.curChar += wUnit.l;
               this.lastMatchWasSpace = true;
+              this.fixContainment(() => {this.moveToNextNode();});
             } else {
               this.matchFailed(() => {this.moveToNextNode();});
             }
@@ -288,6 +294,7 @@ class CurrentSegmentSelecter {
               this.position.index += sUnit.l;
               this.curChar += wUnit.l;
               this.lastMatchWasSpace = wUnit.s === ' ';
+              this.fixContainment(() => {this.position.index += sUnit.l;});
             } else {
               this.matchFailed(() => {this.position.index += sUnit.l;});
             }
@@ -345,6 +352,7 @@ class CurrentSegmentSelecter {
             this.moveToNextNode();
             this.curChar += wUnit.l;
             this.lastMatchWasSpace = true;
+            this.fixContainment(() => {this.moveToNextNode();});
           } else {
             this.matchFailed(() => {this.moveToNextNode();});
           }
@@ -367,6 +375,17 @@ class CurrentSegmentSelecter {
       onSkipThis();
     }
   }
+  
+  fixContainment(onSkipThis) {
+    if (this.curChar < this.textSegment.length) {
+      return;
+    }
+    
+    this.pinRange();
+    if (!this.selRange.intersectsNode(thisJob.targetNode)) {
+      this.matchFailed(onSkipThis);
+    }
+  }
 
   applySelection() {
     if (this.curChar < this.textSegment.length) {
@@ -374,6 +393,16 @@ class CurrentSegmentSelecter {
       return false;
     }
 
+    this.pinRange();
+    const docsel = document.getSelection();
+    docsel.removeAllRanges();
+    docsel.addRange(this.selRange);
+    positionUI(this.selRange.getBoundingClientRect());
+
+    return true;
+  }
+  
+  pinRange() {
     this.selRange.setStart(this.domLocations[0].node, this.domLocations[0].index);
     const {node} = this.position;
     switch (node.nodeType) {
@@ -385,12 +414,6 @@ class CurrentSegmentSelecter {
         this.selRange.setEnd(node, node.childNodes.length);
         break;
     }
-    const docsel = document.getSelection();
-    docsel.removeAllRanges();
-    docsel.addRange(this.selRange);
-    positionUI(this.selRange.getBoundingClientRect());
-
-    return true;
   }
 
   run() {
@@ -403,7 +426,7 @@ class CurrentSegmentSelecter {
 
 function selectCurrentSegment() {
   const segsel = new CurrentSegmentSelecter();
-  segsel.run();
+  return segsel.run();
 }
 
 function positionUI(selRect) {
@@ -449,6 +472,7 @@ export function startSegmentation(targetNode, derivedSegmentations, onselection)
   Object.assign(thisJob, {
     segmentations: derivedSegmentations.slice(),
     currentSegmentationIndex: 0,
+    targetNode: targetNode,
     recordNode: recordContaining(targetNode),
     onselection: onselection
   });
@@ -459,6 +483,7 @@ export function testSegmentation(targetNode, derivedSegmentations) {
   Object.assign(thisJob, {
     segmentations: derivedSegmentations.slice(),
     currentSegmentationIndex: 0,
+    targetNode: targetNode,
     recordNode: recordContaining(targetNode),
     onselection: null
   });
